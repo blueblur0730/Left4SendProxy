@@ -281,8 +281,8 @@ methodmap SendProxyManager
   	 *
   	 * @return				true, if prop is hooked/unhooked, false otherwise
 	*/
-	public static native bool HookGameRulesArrayChange(const char[] cPropName, int iElement, SendPropType stType, PropChangedCallback pCallback);
- 	public static native bool UnhookGameRulesArrayChange(const char[] cPropName, int iElement, PropChangedCallback pCallback);
+	public static native bool HookGameRulesArrayChange(const char[] cPropName, int iElement, SendPropType stType, GameRulesPropChangedCallback pCallback);
+ 	public static native bool UnhookGameRulesArrayChange(const char[] cPropName, int iElement, GameRulesPropChangedCallback pCallback);
 
 	/**
 	 * Checks if a SendProp change is hooked.
@@ -339,7 +339,7 @@ native bool SendProxy_HookPropChangeGameRules(const char[] cPropName, const Game
 native bool SendProxy_HookPropChangeSafe(const int iEntity, const char[] cPropName, const SendPropType stType, const PropChangedCallback pCallback);
 native bool SendProxy_HookPropChangeGameRulesSafe(const char[] cPropName, const SendPropType stType, const GameRulesPropChangedCallback pCallback);
 native bool SendProxy_HookPropChangeArray(const int iEntity, const char[] cPropName, const int iElement, const SendPropType stType, const PropChangedCallback pCallback);
-native bool SendProxy_HookPropChangeArrayGameRules(const char[] cPropName, const int iElement, const SendPropType stType, const PropChangedCallback pCallback);
+native bool SendProxy_HookPropChangeArrayGameRules(const char[] cPropName, const int iElement, const SendPropType stType, const GameRulesPropChangedCallback pCallback);
 native bool SendProxy_IsPropChangeHooked(const int iEntity, const char[] cPropName);
 native bool SendProxy_IsPropChangeHookedGameRules(const char[] cPropName);
 native bool SendProxy_IsPropChangeArrayHooked(const int iEntity, const char[] cPropName, const int iElement);
@@ -348,7 +348,7 @@ native bool SendProxy_IsPropChangeArrayHookedGameRules(const char[] cPropName, c
 native bool SendProxy_UnhookPropChange(const int iEntity, const char[] cPropName, const PropChangedCallback pCallback);
 native bool SendProxy_UnhookPropChangeGameRules(const char[] cPropName, const GameRulesPropChangedCallback pCallback);
 native bool SendProxy_UnhookPropChangeArray(const int iEntity, const char[] cPropName, const int iElement, const PropChangedCallback pCallback);
-native bool SendProxy_UnhookPropChangeArrayGameRules(const char[] cPropName, const int iElement, const PropChangedCallback pCallback);
+native bool SendProxy_UnhookPropChangeArrayGameRules(const char[] cPropName, const int iElement, const GameRulesPropChangedCallback pCallback);
 
 #if !defined REQUIRE_EXTENSIONS
 public __ext_sendproxymanager_SetNTVOptional()
