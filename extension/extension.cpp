@@ -1077,6 +1077,7 @@ bool SendProxyManager::AddChangeHookToList(PropChangeHook sHook, CallBackInfo * 
 		case PropType::Prop_Bool:
 		case PropType::Prop_Vector:
 			break;
+
 		default: return false;
 		}
 
@@ -1133,6 +1134,7 @@ bool SendProxyManager::AddChangeHookToListGamerules(PropChangeHookGamerules sHoo
 		case PropType::Prop_Bool:
 		case PropType::Prop_Vector:
 			break;
+
 		default: return false;
 		}
 
