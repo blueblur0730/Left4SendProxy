@@ -566,7 +566,7 @@ void Hook_GameFrame(bool simulating)
 	{
 		for (int i = 0; i < g_ChangeHooks.Count(); i++)
 		{
-			switch(g_ChangeHooks[i].PropType)
+			switch (g_ChangeHooks[i].PropType)
 			{
 				case PropType::Prop_Int:
 				{
@@ -639,11 +639,11 @@ void Hook_GameFrame(bool simulating)
 					if (!pEntity)
 	  					break;
 
-					int iCurrent = *(int *)((unsigned char *)pEntity + g_ChangeHooks[i].Offset);
-					if (iCurrent != g_ChangeHooks[i].iLastValue)
+					bool bCurrent = *(bool *)((unsigned char *)pEntity + g_ChangeHooks[i].Offset);
+					if (bCurrent != g_ChangeHooks[i].bLastValue)
 					{
-						CallChangeCallbacks(&g_ChangeHooks[i], (void *)&g_ChangeHooks[i].iLastValue, (void *)&iCurrent);
-						g_ChangeHooks[i].iLastValue = iCurrent;
+						CallChangeCallbacks(&g_ChangeHooks[i], (void *)&g_ChangeHooks[i].bLastValue, (void *)&bCurrent);
+						g_ChangeHooks[i].bLastValue = bCurrent;
 					}
 
 					break;
@@ -718,20 +718,20 @@ void Hook_GameFrame(bool simulating)
 					if (strcmp(szCurrent, g_ChangeHooksGamerules[i].cLastValue) != 0)
 					{
 						CallChangeGamerulesCallbacks(&g_ChangeHooksGamerules[i], (void *)g_ChangeHooksGamerules[i].cLastValue, (void *)szCurrent);
-						memset(g_ChangeHooks[i].cLastValue, 0, sizeof(g_ChangeHooks[i].cLastValue));
-						strncpynull(g_ChangeHooks[i].cLastValue, szCurrent, sizeof(g_ChangeHooks[i].cLastValue));
+						memset(g_ChangeHooksGamerules[i].cLastValue, 0, sizeof(g_ChangeHooksGamerules[i].cLastValue));
+						strncpynull(g_ChangeHooksGamerules[i].cLastValue, szCurrent, sizeof(g_ChangeHooksGamerules[i].cLastValue));
 					}
 
 					break;
 				}
 
-				case PropType::Bool:
+				case PropType::Prop_Bool:
 				{
-					int iCurrent = *(int *)((unsigned char *)g_pGameRules + g_ChangeHooksGamerules[i].Offset);
-					if (iCurrent != g_ChangeHooksGamerules[i].iLastValue)
+					int bCurrent = *(bool *)((unsigned char *)g_pGameRules + g_ChangeHooksGamerules[i].Offset);
+					if (bCurrent != g_ChangeHooksGamerules[i].iLastValue)
 					{
-						CallChangeGamerulesCallbacks(&g_ChangeHooksGamerules[i], (void *)&g_ChangeHooksGamerules[i].iLastValue, (void *)&iCurrent);
-						g_ChangeHooksGamerules[i].iLastValue = iCurrent;
+						CallChangeGamerulesCallbacks(&g_ChangeHooksGamerules[i], (void *)&g_ChangeHooksGamerules[i].bLastValue, (void *)&bCurrent);
+						g_ChangeHooksGamerules[i].bLastValue = bCurrent;
 					}
 
 					break;
@@ -1278,10 +1278,11 @@ void CallChangeCallbacks(PropChangeHook * pInfo, void * pOldValue, void * pNewVa
 			{
 			case PropType::Prop_Int:
 			{
+				cell_t iNewValue = static_cast<cell_t>(*(int *)pNewValue);
 				pCallBack->PushCell(pInfo->objectID);
 				pCallBack->PushString(pInfo->pVar->GetName());
 				pCallBack->PushCell(pInfo->iLastValue);
-				pCallBack->PushCell(*(int *)pNewValue);
+				pCallBack->PushCell(iNewValue);
 				pCallBack->PushCell(pInfo->Element);
 				pCallBack->Execute(0);
 			}
@@ -1311,13 +1312,15 @@ void CallChangeCallbacks(PropChangeHook * pInfo, void * pOldValue, void * pNewVa
 
 			case PropType::Prop_Bool:
 			{
+				cell_t bNewValue = static_cast<cell_t>(*(bool *)pNewValue);
 				pCallBack->PushCell(pInfo->objectID);
 				pCallBack->PushString(pInfo->pVar->GetName());
 				pCallBack->PushCell(pInfo->iLastValue);
-				pCallBack->PushCell(static_cast<cell_t>(*(bool *)pNewValue));
+				pCallBack->PushCell(bNewValue);
 				pCallBack->PushCell(pInfo->Element);
 				pCallBack->Execute(0);
 			}
+			break;
 
 			case PropType::Prop_Vector:
 			{
@@ -1367,9 +1370,10 @@ void CallChangeGamerulesCallbacks(PropChangeHookGamerules * pInfo, void * pOldVa
 			{
 			case PropType::Prop_Int:
 			{
+				cell_t iNewValue = static_cast<cell_t>(*(int *)pNewValue);
 				pCallBack->PushString(pInfo->pVar->GetName());
 				pCallBack->PushCell(pInfo->iLastValue);
-				pCallBack->PushCell(*(int *)pNewValue);
+				pCallBack->PushCell(iNewValue);
 				pCallBack->PushCell(pInfo->Element);
 				pCallBack->Execute(0);
 			}
@@ -1397,12 +1401,14 @@ void CallChangeGamerulesCallbacks(PropChangeHookGamerules * pInfo, void * pOldVa
 
 			case PropType::Prop_Bool:
 			{
+				cell_t bNewValue = static_cast<cell_t>(*(bool *)pNewValue);
 				pCallBack->PushString(pInfo->pVar->GetName());
 				pCallBack->PushCell(pInfo->iLastValue);
-				pCallBack->PushCell(static_cast<cell_t>(*(bool *)pNewValue));
+				pCallBack->PushCell(bNewValue);
 				pCallBack->PushCell(pInfo->Element);
 				pCallBack->Execute(0);
 			}
+			break;
 
 			case PropType::Prop_Vector:
 			{
