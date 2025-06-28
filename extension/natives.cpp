@@ -572,7 +572,7 @@ static cell_t Native_UnhookGameRulesChange(IPluginContext * pContext, const cell
 			strcmp(g_ChangeHooksGamerules[i].pVar->GetName(), info.prop->GetName()) == 0)
 		{
 			CallBackInfo sInfo;
-			sInfo.pCallback = callback;
+			sInfo.pCallback = (void *)callback;
 			sInfo.pOwner = (void *)pContext;
 			sInfo.iCallbackType = CallBackType::Callback_PluginFunction;
 			g_SendProxyManager.UnhookChangeGamerules(i, &sInfo);
@@ -702,7 +702,7 @@ static cell_t Native_UnhookGameRulesArrayChange(IPluginContext * pContext, const
 			g_ChangeHooksGamerules[i].SendPropType == info.prop->GetType())
 		{
 			CallBackInfo sInfo;
-			sInfo.pCallback = callback;
+			sInfo.pCallback = (void *)callback;
 			sInfo.pOwner = (void *)pContext;
 			sInfo.iCallbackType = CallBackType::Callback_PluginFunction;
 			g_SendProxyManager.UnhookChangeGamerules(i, &sInfo);
