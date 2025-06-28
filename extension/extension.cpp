@@ -1100,7 +1100,7 @@ bool SendProxyManager::AddChangeHookToList(PropChangeHook sHook, CallBackInfo * 
 			{
 				CallBackInfo sCallInfo = *pInfo;
 				sHook.vCallbacksInfo->AddToTail(sCallInfo);
-				g_ChangeHooks.AddToTail(sHook);
+				g_ChangeHooks[i].AddToTail(sHook);
 				return true;
 			}
 
@@ -1113,8 +1113,8 @@ bool SendProxyManager::AddChangeHookToList(PropChangeHook sHook, CallBackInfo * 
 				if ((pInfo->pCallback != (*pCallBacks)[j].pCallback))
 				{
 					CallBackInfo sCallInfo = *pInfo;
-					sHook.vCallbacksInfo->AddToTail(sCallInfo);
-					g_ChangeHooks.AddToTail(sHook);
+					g_ChangeHooks[i].vCallbacksInfo->AddToTail(sCallInfo);
+					g_ChangeHooks[i].AddToTail(sHook);
 					return true;
 				}
 			}
@@ -1180,11 +1180,12 @@ bool SendProxyManager::AddChangeHookToListGamerules(PropChangeHookGamerules sHoo
 			{
 				CallBackInfo sCallInfo = *pInfo;
 				sHook.vCallbacksInfo->AddToTail(sCallInfo);
-				g_ChangeHooksGamerules.AddToTail(sHook);
+				g_ChangeHooksGamerules[i].AddToTail(sHook);
 				return true;
 			}
 
 			// case: hook a same prop, with different callback.
+			pHookInfo = &g_ChangeHooksGamerules[i];
 			auto pCallBacks = pHookInfo->vCallbacksInfo;
 			for (int j = 0; j < pCallBacks->Count(); j++)
 			{
@@ -1192,8 +1193,8 @@ bool SendProxyManager::AddChangeHookToListGamerules(PropChangeHookGamerules sHoo
 				if ((pInfo->pCallback != (*pCallBacks)[j].pCallback))
 				{
 					CallBackInfo sCallInfo = *pInfo;
-					sHook.vCallbacksInfo->AddToTail(sCallInfo);
-					g_ChangeHooksGamerules.AddToTail(sHook);
+					g_ChangeHooksGamerules[i].vCallbacksInfo->AddToTail(sCallInfo);
+					g_ChangeHooksGamerules[i].AddToTail(sHook);
 					return true;
 				}
 			}
