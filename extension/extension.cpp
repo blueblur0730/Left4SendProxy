@@ -1107,10 +1107,10 @@ bool SendProxyManager::AddChangeHookToList(PropChangeHook sHook, CallBackInfo * 
 			// case: hook a same prop, with different callback.
 			pHookInfo = &g_ChangeHooks[i];
 			auto pCallBacks = pHookInfo->vCallbacksInfo;
-			for (int j = 0; j < pHookInfo->Count(); j++)
+			for (int j = 0; j < pCallBacks->Count(); j++)
 			{
 				// dose not need to ccheck the owner, as other plugins may hook the same prop on a same entity with a different callback.
-				if ((pInfo->pCallback != (*pCallBacks)[j].pCallBack))
+				if ((pInfo->pCallback != (*pCallBacks)[j].pCallback))
 				{
 					CallBackInfo sCallInfo = *pInfo;
 					sHook.vCallbacksInfo->AddToTail(sCallInfo);
@@ -1186,7 +1186,7 @@ bool SendProxyManager::AddChangeHookToListGamerules(PropChangeHookGamerules sHoo
 
 			// case: hook a same prop, with different callback.
 			auto pCallBacks = pHookInfo->vCallbacksInfo;
-			for (int j = 0; j < pHookInfo->Count(); j++)
+			for (int j = 0; j < pCallBacks->Count(); j++)
 			{
 				// dose not need to ccheck the owner, as other plugins may hook the same prop on a same entity with a different callback.
 				if ((pInfo->pCallback != (*pCallBacks)[j].pCallBack))
