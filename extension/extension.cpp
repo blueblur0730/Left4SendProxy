@@ -686,7 +686,7 @@ void Hook_GameFrame(bool simulating)
 		//Gamerules hooks
 		for (int i = 0; i < g_ChangeHooksGamerules.Count(); i++)
 		{
-			switch(g_ChangeHooksGamerules[i].PropType)
+			switch (g_ChangeHooksGamerules[i].PropType)
 			{
 				case PropType::Prop_Int:
 				{
@@ -1087,40 +1087,43 @@ bool SendProxyManager::AddChangeHookToList(PropChangeHook sHook, CallBackInfo * 
 	default: return false;
 	}
 
-	decltype(&g_ChangeHooks[0]) pHookInfo = nullptr;
-	for (int i = 0; i < g_ChangeHooks.Count(); i++)
+	if (g_ChangeHooks.Count() > 0)
 	{
-		// happens on a same entity and a same prop.
-		if (g_ChangeHooks[i].pVar == sHook.pVar && g_ChangeHooks[i].objectID == sHook.objectID)
+		for (int i = 0; i < g_ChangeHooks.Count(); i++)
 		{
-			// case: hook an DPT_Array.
-			// if the incoming element differs.
-			// this presume that you have already hook this DPT_Array with any element.
-			if (sHook.Element != g_ChangeHooks[i].Element)
+			// happens on a same entity and a same prop.
+			if (g_ChangeHooks[i].pVar == sHook.pVar && g_ChangeHooks[i].objectID == sHook.objectID)
 			{
-				CallBackInfo sCallInfo = *pInfo;
-				sHook.vCallbacksInfo->AddToTail(sCallInfo);
-				g_ChangeHooks.AddToTail(sHook);
-				return true;
-			}
-
-			// case: hook a same prop, with different callback.
-			pHookInfo = &g_ChangeHooks[i];
-			auto pCallBacks = pHookInfo->vCallbacksInfo;
-			for (int j = 0; j < pCallBacks->Count(); j++)
-			{
-				// dose not need to ccheck the owner, as other plugins may hook the same prop on a same entity with a different callback.
-				if ((pInfo->pCallback != (*pCallBacks)[j].pCallback))
+				// case: hook an DPT_Array.
+				// if the incoming element differs.
+				// this presume that you have already hook this DPT_Array with any element.
+				if (sHook.Element != g_ChangeHooks[i].Element)
 				{
 					CallBackInfo sCallInfo = *pInfo;
-					g_ChangeHooks[i].vCallbacksInfo->AddToTail(sCallInfo);
-					//g_ChangeHooks.AddToTail(sHook);
+					sHook.vCallbacksInfo->AddToTail(sCallInfo);
+					g_ChangeHooks.AddToTail(sHook);
 					return true;
 				}
-			}
 
-			// else, this is already hooked.
-			return false;
+				// case: hook a same prop, with different callback.
+				decltype(&g_ChangeHooks[0]) pHookInfo = nullptr;
+				pHookInfo = &g_ChangeHooks[i];
+				auto pCallBacks = pHookInfo->vCallbacksInfo;
+				for (int j = 0; j < pCallBacks->Count(); j++)
+				{
+					// dose not need to ccheck the owner, as other plugins may hook the same prop on a same entity with a different callback.
+					if ((pInfo->pCallback != (*pCallBacks)[j].pCallback))
+					{
+						CallBackInfo sCallInfo = *pInfo;
+						g_ChangeHooks[i].vCallbacksInfo->AddToTail(sCallInfo);
+						//g_ChangeHooks.AddToTail(sHook);
+						return true;
+					}
+				}
+
+				// else, this is already hooked.
+				return false;
+			}
 		}
 	}
 
@@ -1167,40 +1170,43 @@ bool SendProxyManager::AddChangeHookToListGamerules(PropChangeHookGamerules sHoo
 	default: return false;
 	}
 
-	decltype(&g_ChangeHooksGamerules[0]) pHookInfo = nullptr;
-	for (int i = 0; i < g_ChangeHooksGamerules.Count(); i++)
+	if (g_ChangeHooksGamerules.Count() > 0)
 	{
-		// happens on a same prop.
-		if (g_ChangeHooksGamerules[i].pVar == sHook.pVar)
+		for (int i = 0; i < g_ChangeHooksGamerules.Count(); i++)
 		{
-			// case: hook an DPT_Array.
-			// if the incoming element differs.
-			// this presume that you have already hook this DPT_Array with any element.
-			if (sHook.Element != g_ChangeHooksGamerules[i].Element)
+			// happens on a same prop.
+			if (g_ChangeHooksGamerules[i].pVar == sHook.pVar)
 			{
-				CallBackInfo sCallInfo = *pInfo;
-				sHook.vCallbacksInfo->AddToTail(sCallInfo);
-				g_ChangeHooksGamerules.AddToTail(sHook);
-				return true;
-			}
-
-			// case: hook a same prop, with different callback.
-			pHookInfo = &g_ChangeHooksGamerules[i];
-			auto pCallBacks = pHookInfo->vCallbacksInfo;
-			for (int j = 0; j < pCallBacks->Count(); j++)
-			{
-				// dose not need to ccheck the owner, as other plugins may hook the same prop on a same entity with a different callback.
-				if ((pInfo->pCallback != (*pCallBacks)[j].pCallback))
+				// case: hook an DPT_Array.
+				// if the incoming element differs.
+				// this presume that you have already hook this DPT_Array with any element.
+				if (sHook.Element != g_ChangeHooksGamerules[i].Element)
 				{
 					CallBackInfo sCallInfo = *pInfo;
-					g_ChangeHooksGamerules[i].vCallbacksInfo->AddToTail(sCallInfo);
-					//g_ChangeHooksGamerules.AddToTail(sHook);
+					sHook.vCallbacksInfo->AddToTail(sCallInfo);
+					g_ChangeHooksGamerules.AddToTail(sHook);
 					return true;
 				}
-			}
 
-			// else, this is already hooked.
-			return false;
+				// case: hook a same prop, with different callback.
+				decltype(&g_ChangeHooksGamerules[0]) pHookInfo = nullptr;
+				pHookInfo = &g_ChangeHooksGamerules[i];
+				auto pCallBacks = pHookInfo->vCallbacksInfo;
+				for (int j = 0; j < pCallBacks->Count(); j++)
+				{
+					// dose not need to ccheck the owner, as other plugins may hook the same prop on a same entity with a different callback.
+					if ((pInfo->pCallback != (*pCallBacks)[j].pCallback))
+					{
+						CallBackInfo sCallInfo = *pInfo;
+						g_ChangeHooksGamerules[i].vCallbacksInfo->AddToTail(sCallInfo);
+						//g_ChangeHooksGamerules.AddToTail(sHook);
+						return true;
+					}
+				}
+
+				// else, this is already hooked.
+				return false;
+			}
 		}
 	}
 
