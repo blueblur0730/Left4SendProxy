@@ -727,7 +727,7 @@ void Hook_GameFrame(bool simulating)
 
 				case PropType::Prop_Bool:
 				{
-					int bCurrent = *(int *)((unsigned char *)g_pGameRules + g_ChangeHooksGamerules[i].Offset);
+					bool bCurrent = *(bool *)((unsigned char *)g_pGameRules + g_ChangeHooksGamerules[i].Offset);
 					if (bCurrent != g_ChangeHooksGamerules[i].bLastValue)
 					{
 						CallChangeGamerulesCallbacks(&g_ChangeHooksGamerules[i], (void *)&g_ChangeHooksGamerules[i].bLastValue, (void *)&bCurrent);
@@ -1100,7 +1100,7 @@ bool SendProxyManager::AddChangeHookToList(PropChangeHook sHook, CallBackInfo * 
 			{
 				CallBackInfo sCallInfo = *pInfo;
 				sHook.vCallbacksInfo->AddToTail(sCallInfo);
-				g_ChangeHooks[i].AddToTail(sHook);
+				g_ChangeHooks.AddToTail(sHook);
 				return true;
 			}
 
@@ -1114,7 +1114,7 @@ bool SendProxyManager::AddChangeHookToList(PropChangeHook sHook, CallBackInfo * 
 				{
 					CallBackInfo sCallInfo = *pInfo;
 					g_ChangeHooks[i].vCallbacksInfo->AddToTail(sCallInfo);
-					g_ChangeHooks[i].AddToTail(sHook);
+					g_ChangeHooks.AddToTail(sHook);
 					return true;
 				}
 			}
@@ -1180,7 +1180,7 @@ bool SendProxyManager::AddChangeHookToListGamerules(PropChangeHookGamerules sHoo
 			{
 				CallBackInfo sCallInfo = *pInfo;
 				sHook.vCallbacksInfo->AddToTail(sCallInfo);
-				g_ChangeHooksGamerules[i].AddToTail(sHook);
+				g_ChangeHooksGamerules.AddToTail(sHook);
 				return true;
 			}
 
@@ -1194,7 +1194,7 @@ bool SendProxyManager::AddChangeHookToListGamerules(PropChangeHookGamerules sHoo
 				{
 					CallBackInfo sCallInfo = *pInfo;
 					g_ChangeHooksGamerules[i].vCallbacksInfo->AddToTail(sCallInfo);
-					g_ChangeHooksGamerules[i].AddToTail(sHook);
+					g_ChangeHooksGamerules.AddToTail(sHook);
 					return true;
 				}
 			}
