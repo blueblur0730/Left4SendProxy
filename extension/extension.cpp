@@ -1114,7 +1114,7 @@ bool SendProxyManager::AddChangeHookToList(PropChangeHook sHook, CallBackInfo * 
 				{
 					CallBackInfo sCallInfo = *pInfo;
 					g_ChangeHooks[i].vCallbacksInfo->AddToTail(sCallInfo);
-					g_ChangeHooks.AddToTail(sHook);
+					//g_ChangeHooks.AddToTail(sHook);
 					return true;
 				}
 			}
@@ -1194,7 +1194,7 @@ bool SendProxyManager::AddChangeHookToListGamerules(PropChangeHookGamerules sHoo
 				{
 					CallBackInfo sCallInfo = *pInfo;
 					g_ChangeHooksGamerules[i].vCallbacksInfo->AddToTail(sCallInfo);
-					g_ChangeHooksGamerules.AddToTail(sHook);
+					//g_ChangeHooksGamerules.AddToTail(sHook);
 					return true;
 				}
 			}
