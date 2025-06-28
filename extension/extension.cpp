@@ -1189,7 +1189,7 @@ bool SendProxyManager::AddChangeHookToListGamerules(PropChangeHookGamerules sHoo
 			for (int j = 0; j < pCallBacks->Count(); j++)
 			{
 				// dose not need to ccheck the owner, as other plugins may hook the same prop on a same entity with a different callback.
-				if ((pInfo->pCallback != (*pCallBacks)[j].pCallBack))
+				if ((pInfo->pCallback != (*pCallBacks)[j].pCallback))
 				{
 					CallBackInfo sCallInfo = *pInfo;
 					sHook.vCallbacksInfo->AddToTail(sCallInfo);
