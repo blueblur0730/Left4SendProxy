@@ -80,7 +80,12 @@ struct CallBackInfo
 {
 	CallBackInfo() { memset(this, 0, sizeof(CallBackInfo)); }
 	CallBackInfo(const CallBackInfo & rObj) { memcpy(this, &rObj, sizeof(CallBackInfo)); }
-	const CallBackInfo & operator=(const CallBackInfo & rObj) { return *(new CallBackInfo(rObj)); }
+	CallBackInfo& operator=(const CallBackInfo& rObj) {
+		if (this != &rObj) {
+			memcpy(this, &rObj, sizeof(CallBackInfo));
+		}
+		return *this;
+	}
 	void *									pOwner; //Pointer to plugin context or IExtension *
 	void *									pCallback;
 	CallBackType							iCallbackType;
