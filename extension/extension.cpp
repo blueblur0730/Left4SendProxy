@@ -1056,19 +1056,6 @@ bool SendProxyManager::AddHookToListGamerules(SendPropHookGamerules hook)
 
 bool SendProxyManager::AddChangeHookToList(PropChangeHook sHook, CallBackInfo * pInfo)
 {
-	// just validate it
-	switch (sHook.PropType)
-	{
-	case PropType::Prop_Int:
-	case PropType::Prop_Float:
-	case PropType::Prop_String:
-	case PropType::Prop_Bool:
-	case PropType::Prop_Vector:
-		break;
-
-	default: return false;
-	}
-
 	edict_t * pEnt = gamehelpers->EdictOfIndex(sHook.objectID);
 	if (!pEnt || pEnt->IsFree()) 
 		return false; //should never happen
@@ -1145,19 +1132,6 @@ bool SendProxyManager::AddChangeHookToListGamerules(PropChangeHookGamerules sHoo
 			g_pSM->LogError(myself, "CRITICAL ERROR: Could not get gamerules pointer!");
 			return false;
 		}
-	}
-
-	// just validate it
-	switch (sHook.PropType)
-	{
-	case PropType::Prop_Int:
-	case PropType::Prop_Float:
-	case PropType::Prop_String:
-	case PropType::Prop_Bool:
-	case PropType::Prop_Vector:
-		break;
-
-	default: return false;
 	}
 
 	switch (sHook.PropType)

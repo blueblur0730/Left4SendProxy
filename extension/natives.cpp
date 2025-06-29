@@ -635,7 +635,7 @@ static cell_t Native_UnhookArrayChange(IPluginContext * pContext, const cell_t *
 	hook.Element = element;
 	hook.SendPropType = info.prop->GetType();
 	hook.pVar = pProp;
-	hook.Offset == info.actual_offset + pProp->GetOffset();
+	hook.Offset = info.actual_offset + pProp->GetOffset();
 
 	int i = g_ChangeHooks.Find(hook);
 	if (g_ChangeHooks.IsValidIndex(i))
@@ -777,7 +777,7 @@ static cell_t Native_IsArrayChangeHooked(IPluginContext * pContext, const cell_t
 	hook.Element = element;
 	hook.SendPropType = info.prop->GetType();
 	hook.pVar = pProp;
-	hook.Offset == info.actual_offset + pProp->GetOffset();
+	hook.Offset = info.actual_offset + pProp->GetOffset();
 	if (g_ChangeHooks.HasElement(hook))
 	{
 		for (int i = 0; i < g_ChangeHooks.Count(); i++)
