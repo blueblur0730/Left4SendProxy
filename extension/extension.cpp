@@ -1273,7 +1273,9 @@ void SendProxyManager::UnhookChange(int i, CallBackInfo * pInfo)
 	{
 		for (int j = 0; j < pCallbacks->Count(); j++)
 		{
-			if ((*pCallbacks)[j].iCallbackType == pInfo->iCallbackType && (*pCallbacks)[j].pCallback == (void *)pInfo->pCallback)
+			if ((*pCallbacks)[j].iCallbackType == pInfo->iCallbackType && 
+				(*pCallbacks)[j].pCallback == (void *)pInfo->pCallback && 
+				(*pCallbacks)[j].pOwner == (void *)pInfo->pOwner)
 			{
 				pCallbacks->Remove(j--);
 			}
@@ -1295,7 +1297,9 @@ void SendProxyManager::UnhookChangeGamerules(int i, CallBackInfo * pInfo)
 	{
 		for (int j = 0; j < pCallbacks->Count(); j++)
 		{
-			if ((*pCallbacks)[j].iCallbackType == pInfo->iCallbackType && (*pCallbacks)[j].pCallback == (void *)pInfo->pCallback)
+			if ((*pCallbacks)[j].iCallbackType == pInfo->iCallbackType && 
+				(*pCallbacks)[j].pCallback == (void *)pInfo->pCallback &&
+				(*pCallbacks)[j].pOwner == (void *)pInfo->pOwner)
 			{
 				pCallbacks->Remove(j--);
 			}

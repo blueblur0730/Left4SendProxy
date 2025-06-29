@@ -135,6 +135,15 @@ struct PropChangeHook
 		*vCallbacksInfo = *rObj.vCallbacksInfo;
 	}
 	~PropChangeHook() { delete vCallbacksInfo; }
+	bool operator==(const PropChangeHook & rObj) const {
+		return (rObj.pVar == pVar &&
+				rObj.SendPropType == SendPropType &&
+				rObj.Offset == Offset &&
+				rObj.objectID == objectID &&
+				rObj.Element == Element &&
+				strcmp(rObj.pVar->GetName(), pVar->GetName()) == 0);
+	}
+	
 	union //unfortunately we MUST use union instead of std::variant cuz we should prevent libstdc++ linking in linux =|
 	{
 		int									iLastValue;
@@ -150,6 +159,24 @@ struct PropChangeHook
 	int										objectID;
 	int										Element{0};
 	CUtlVector<CallBackInfo> *				vCallbacksInfo;
+
+	bool HasCallBack(IPluginContext *pContext) {
+		if (vCallbacksInfo->Count())
+		{
+			for (int j = 0; j < vCallbacksInfo->Count(); j++)
+			{
+				if ((*vCallbacksInfo)[j].iCallbackType == CallBackType::Callback_PluginFunction && 
+					(*vCallbacksInfo)[j].pOwner == (void *)pContext)
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		return false;
+	}
 };
 
 struct PropChangeHookGamerules
@@ -162,6 +189,13 @@ struct PropChangeHookGamerules
 		*vCallbacksInfo = *rObj.vCallbacksInfo;
 	}
 	~PropChangeHookGamerules() { delete vCallbacksInfo; }
+	bool operator==(const PropChangeHookGamerules & rObj) const {
+		return (rObj.pVar == pVar &&
+				rObj.SendPropType == SendPropType &&
+				rObj.Offset == Offset &&
+				rObj.Element == Element &&
+				strcmp(rObj.pVar->GetName(), pVar->GetName()) == 0);
+	}
 	union //unfortunately we MUST use union instead of std::variant cuz we should prevent libstdc++ linking in linux =|
 	{
 		int									iLastValue;
@@ -176,6 +210,24 @@ struct PropChangeHookGamerules
 	unsigned int							Offset;
 	int										Element{0};
 	CUtlVector<CallBackInfo> *				vCallbacksInfo;
+
+	bool HasCallBack(IPluginContext *pContext) {
+		if (vCallbacksInfo->Count())
+		{
+			for (int j = 0; j < vCallbacksInfo->Count(); j++)
+			{
+				if ((*vCallbacksInfo)[j].iCallbackType == CallBackType::Callback_PluginFunction && 
+					(*vCallbacksInfo)[j].pOwner == (void *)pContext)
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		return false;
+	}
 };
  
 class SendProxyManager :

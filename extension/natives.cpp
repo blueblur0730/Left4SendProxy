@@ -506,26 +506,25 @@ static cell_t Native_UnhookChange(IPluginContext * pContext, const cell_t * para
 	CHECK_VALID_ENTITY_SENDPROP(entity, name)
 
 	IPluginFunction * callback = pContext->GetFunctionById(params[3]);
-	bool bFound = false;
-	for (int i = 0; i < g_ChangeHooks.Count(); i++)
+
+	PropChangeHook hook;
+	hook.objectID = entity;
+	hook.pVar = info.prop;
+	hook.Offset = info.actual_offset;
+	hook.SendPropType = info.prop->GetType();
+
+	int i = g_ChangeHooks.Find(hook);
+	if (g_ChangeHooks.IsValidIndex(i))
 	{
-		if (g_ChangeHooks[i].objectID == entity && 
-			g_ChangeHooks[i].pVar == info.prop &&
-			g_ChangeHooks[i].Offset == info.actual_offset &&
-   			g_ChangeHooks[i].SendPropType == info.prop->GetType() &&
-			strcmp(g_ChangeHooks[i].pVar->GetName(), info.prop->GetName()) == 0)
-		{
-			CallBackInfo sInfo;
-			sInfo.pCallback = callback;
-			sInfo.pOwner = (void *)pContext;
-			sInfo.iCallbackType = CallBackType::Callback_PluginFunction;
-			g_SendProxyManager.UnhookChange(i, &sInfo);
-			bFound = true;
-			break;
-		}
+		CallBackInfo sInfo;
+		sInfo.pCallback = (void *)callback;
+		sInfo.pOwner = (void *)pContext;
+		sInfo.iCallbackType = CallBackType::Callback_PluginFunction;
+		g_SendProxyManager.UnhookChange(i, &sInfo);
+		return (cell_t)1;
 	}
 
-	return bFound ? (cell_t)1 : (cell_t)0;
+	return (cell_t)0;
 }
 
 static cell_t Native_HookGameRulesChange(IPluginContext * pContext, const cell_t * params)
@@ -562,26 +561,24 @@ static cell_t Native_UnhookGameRulesChange(IPluginContext * pContext, const cell
 	CHECK_VALID_GAMERULES_SENDPROP(name)
 
 	IPluginFunction * callback = pContext->GetFunctionById(params[2]);
-	bool bFound = false;
 
-	for (int i = 0; i < g_ChangeHooksGamerules.Count(); i++)
+	PropChangeHookGamerules hook;
+	hook.pVar = info.prop;
+	hook.Offset = info.actual_offset;
+	hook.SendPropType = info.prop->GetType();
+
+	int i = g_ChangeHooksGamerules.Find(hook);
+	if (g_ChangeHooksGamerules.IsValidIndex(i))
 	{
-		if (g_ChangeHooksGamerules[i].pVar == info.prop &&
-			g_ChangeHooksGamerules[i].Offset == info.actual_offset &&
-   			g_ChangeHooksGamerules[i].SendPropType == info.prop->GetType() &&
-			strcmp(g_ChangeHooksGamerules[i].pVar->GetName(), info.prop->GetName()) == 0)
-		{
-			CallBackInfo sInfo;
-			sInfo.pCallback = (void *)callback;
-			sInfo.pOwner = (void *)pContext;
-			sInfo.iCallbackType = CallBackType::Callback_PluginFunction;
-			g_SendProxyManager.UnhookChangeGamerules(i, &sInfo);
-			bFound = true;
-			break;
-		}
+		CallBackInfo sInfo;
+		sInfo.pCallback = (void *)callback;
+		sInfo.pOwner = (void *)pContext;
+		sInfo.iCallbackType = CallBackType::Callback_PluginFunction;
+		g_SendProxyManager.UnhookChangeGamerules(i, &sInfo);
+		return (cell_t)1;
 	}
 
-	return bFound ? (cell_t)1 : (cell_t)0;
+	return (cell_t)0;
 }
 
 static cell_t Native_HookArrayChange(IPluginContext * pContext, const cell_t * params)
@@ -632,27 +629,26 @@ static cell_t Native_UnhookArrayChange(IPluginContext * pContext, const cell_t *
 	CHECK_ARRAYPROP_NO_BASE_TYPE(element, name)
 
 	IPluginFunction *callback = pContext->GetFunctionById(params[4]);
-	bool bFound = false;
-	for (int i = 0; i < g_ChangeHooks.Count(); i++)
+
+	PropChangeHook hook;
+	hook.objectID = entity;
+	hook.Element = element;
+	hook.SendPropType = info.prop->GetType();
+	hook.pVar = pProp;
+	hook.Offset == info.actual_offset + pProp->GetOffset();
+
+	int i = g_ChangeHooks.Find(hook);
+	if (g_ChangeHooks.IsValidIndex(i))
 	{
-		if (g_ChangeHooks[i].objectID == entity && 
-			g_ChangeHooks[i].Element == element && 
-			g_ChangeHooks[i].SendPropType == info.prop->GetType() &&
-			g_ChangeHooks[i].pVar == pProp &&
-			g_ChangeHooks[i].Offset == info.actual_offset + pProp->GetOffset() &&
-			strcmp(g_ChangeHooks[i].pVar->GetName(), pProp->GetName()) == 0)
-		{
-			CallBackInfo sInfo;
-			sInfo.pCallback = (void *)callback;
-			sInfo.pOwner = (void *)pContext;
-			sInfo.iCallbackType = CallBackType::Callback_PluginFunction;
-			g_SendProxyManager.UnhookChange(i, &sInfo);
-			bFound = true;
-			break;
-		}
+		CallBackInfo sInfo;
+		sInfo.pCallback = (void *)callback;
+		sInfo.pOwner = (void *)pContext;
+		sInfo.iCallbackType = CallBackType::Callback_PluginFunction;
+		g_SendProxyManager.UnhookChange(i, &sInfo);
+		return (cell_t)1;
 	}
 
-	return bFound ? (cell_t)1 : (cell_t)0;
+	return (cell_t)0;
 }
 
 static cell_t Native_HookGameRulesArrayChange(IPluginContext * pContext, const cell_t * params)
@@ -693,25 +689,25 @@ static cell_t Native_UnhookGameRulesArrayChange(IPluginContext * pContext, const
 	CHECK_ARRAYPROP_NO_BASE_TYPE(element, name)
 	
 	IPluginFunction * callback = pContext->GetFunctionById(params[3]);
-	bool bFound = false;
-	for (int i = 0; i < g_ChangeHooksGamerules.Count(); i++)
+
+	PropChangeHookGamerules hook;
+	hook.pVar = pProp;
+	hook.Element = element;
+	hook.SendPropType = info.prop->GetType();
+	hook.Offset = info.actual_offset + pProp->GetOffset();
+
+	int i = g_ChangeHooksGamerules.Find(hook);
+	if (g_ChangeHooksGamerules.IsValidIndex(i))
 	{
-		if (g_ChangeHooksGamerules[i].Element == element &&
-			g_ChangeHooksGamerules[i].Offset == info.actual_offset + pProp->GetOffset() &&
-			g_ChangeHooksGamerules[i].pVar == pProp &&
-			g_ChangeHooksGamerules[i].SendPropType == info.prop->GetType())
-		{
-			CallBackInfo sInfo;
-			sInfo.pCallback = (void *)callback;
-			sInfo.pOwner = (void *)pContext;
-			sInfo.iCallbackType = CallBackType::Callback_PluginFunction;
-			g_SendProxyManager.UnhookChangeGamerules(i, &sInfo);
-			bFound = true;
-			break;
-		}
+		CallBackInfo sInfo;
+		sInfo.pCallback = (void *)callback;
+		sInfo.pOwner = (void *)pContext;
+		sInfo.iCallbackType = CallBackType::Callback_PluginFunction;
+		g_SendProxyManager.UnhookChangeGamerules(i, &sInfo);
+		return (cell_t)1;
 	}
 
-	return bFound ? (cell_t)1 : (cell_t)0;
+	return (cell_t)0;
 }
 
 static cell_t Native_IsChangeHooked(IPluginContext * pContext, const cell_t * params)
@@ -724,26 +720,17 @@ static cell_t Native_IsChangeHooked(IPluginContext * pContext, const cell_t * pa
 	pContext->LocalToString(params[2], &propName);
 	CHECK_VALID_ENTITY_SENDPROP(entity, propName)
 
-	for (int i = 0; i < g_ChangeHooks.Count(); i++)
+	PropChangeHook hook;
+	hook.objectID = entity;
+	hook.SendPropType = info.prop->GetType();
+	hook.pVar = info.prop;
+	hook.Offset = info.actual_offset;
+	if (g_ChangeHooks.HasElement(hook))
 	{
-		if (g_ChangeHooks[i].objectID == entity && 
-			strcmp(propName, g_ChangeHooks[i].pVar->GetName()) == 0 && 
-			g_ChangeHooks[i].Offset == info.actual_offset && 
-		    g_ChangeHooks[i].SendPropType == info.prop->GetType() && 
-			g_ChangeHooks[i].pVar == info.prop)
+		for (int i = 0; i < g_ChangeHooks.Count(); i++)
 		{
-			auto pCallbacks = g_ChangeHooks[i].vCallbacksInfo;
-			if (pCallbacks->Count())
-			{
-				for (int j = 0; j < pCallbacks->Count(); j++)
-				{
-					if ((*pCallbacks)[j].iCallbackType == CallBackType::Callback_PluginFunction && 
-						(*pCallbacks)[j].pOwner == (void *)pContext)
-					{
-						return (cell_t)1;
-					}
-				}
-			}
+			if (g_ChangeHooks[i].HasCallBack(pContext))
+				return (cell_t)1;
 		}
 	}
 	
@@ -755,25 +742,16 @@ static cell_t Native_IsGameRulesChangeHooked(IPluginContext * pContext, const ce
 	char * propName;
 	CHECK_VALID_GAMERULES_SENDPROP(propName)
 
-	for (int i = 0; i < g_ChangeHooksGamerules.Count(); i++)
+	PropChangeHookGamerules hook;
+	hook.pVar = pProp;
+	hook.Offset = info.actual_offset;
+	hook.SendPropType = info.prop->GetType();
+	if (g_ChangeHooksGamerules.HasElement(hook))
 	{
-		if (strcmp(propName, g_ChangeHooksGamerules[i].pVar->GetName()) == 0 && 
-			g_ChangeHooksGamerules[i].Offset == info.actual_offset &&
-			g_ChangeHooksGamerules[i].SendPropType == info.prop->GetType() &&
-			g_ChangeHooksGamerules[i].pVar == pProp)	
+		for (int i = 0; i < g_ChangeHooksGamerules.Count(); i++)
 		{
-			auto pCallbacks = g_ChangeHooksGamerules[i].vCallbacksInfo;
-			if (pCallbacks->Count())
-			{
-				for (int j = 0; j < pCallbacks->Count(); j++)
-				{
-					if ((*pCallbacks)[j].iCallbackType == CallBackType::Callback_PluginFunction && 
-						(*pCallbacks)[j].pOwner == (void *)pContext)
-					{
-						return (cell_t)1;
-					}
-				}
-			}
+			if (g_ChangeHooksGamerules[i].HasCallBack(pContext))
+				return (cell_t)1;
 		}
 	}
 
@@ -794,27 +772,18 @@ static cell_t Native_IsArrayChangeHooked(IPluginContext * pContext, const cell_t
 	SendProp *pProp = NULL;
 	CHECK_ARRAYPROP_NO_BASE_TYPE(element, name)
 
-	for (int i = 0; i < g_ChangeHooks.Count(); i++)
+	PropChangeHook hook;
+	hook.objectID = entity;
+	hook.Element = element;
+	hook.SendPropType = info.prop->GetType();
+	hook.pVar = pProp;
+	hook.Offset == info.actual_offset + pProp->GetOffset();
+	if (g_ChangeHooks.HasElement(hook))
 	{
-		if (g_ChangeHooks[i].Element == element && 
-			g_ChangeHooks[i].objectID == entity && 
-			g_ChangeHooks[i].pVar == pProp &&
-			g_ChangeHooks[i].SendPropType == info.prop->GetType() &&
-			g_ChangeHooks[i].Offset == info.actual_offset + pProp->GetOffset() &&
-			strcmp(pProp->GetName(), g_ChangeHooks[i].pVar->GetName()) == 0)
+		for (int i = 0; i < g_ChangeHooks.Count(); i++)
 		{
-			auto pCallbacks = g_ChangeHooks[i].vCallbacksInfo;
-			if (pCallbacks->Count())
-			{
-				for (int j = 0; j < pCallbacks->Count(); j++)
-				{
-					if ((*pCallbacks)[j].iCallbackType == CallBackType::Callback_PluginFunction && 
-						(*pCallbacks)[j].pOwner == (void *)pContext)
-					{
-						return (cell_t)1;
-					}
-				}
-			}
+			if (g_ChangeHooks[i].HasCallBack(pContext))
+				return (cell_t)1;
 		}
 	}
 
@@ -830,26 +799,17 @@ static cell_t Native_IsGameRulesArrayChangeHooked(IPluginContext * pContext, con
 	pProp = NULL;
 	CHECK_ARRAYPROP_NO_BASE_TYPE(element, name)
 
-	for (int i = 0; i < g_ChangeHooksGamerules.Count(); i++)
+	PropChangeHookGamerules hook;
+	hook.pVar = pProp;
+	hook.Element = element;
+	hook.SendPropType = info.prop->GetType();
+	hook.Offset = info.actual_offset + pProp->GetOffset();
+	if (g_ChangeHooksGamerules.HasElement(hook))
 	{
-		if (g_ChangeHooksGamerules[i].Element == element && 
-			g_ChangeHooksGamerules[i].pVar == pProp &&
-   			g_ChangeHooksGamerules[i].SendPropType == info.prop->GetType() &&
-			g_ChangeHooksGamerules[i].Offset == info.actual_offset + pProp->GetOffset() &&
-			strcmp(pProp->GetName(), g_ChangeHooksGamerules[i].pVar->GetName()) == 0)
+		for (int i = 0; i < g_ChangeHooksGamerules.Count(); i++)
 		{
-			auto pCallbacks = g_ChangeHooksGamerules[i].vCallbacksInfo;
-			if (pCallbacks->Count())
-			{
-				for (int j = 0; j < pCallbacks->Count(); j++)
-				{
-					if ((*pCallbacks)[j].iCallbackType == CallBackType::Callback_PluginFunction && 
-						(*pCallbacks)[j].pOwner == (void *)pContext)
-					{
-						return (cell_t)1;
-					}
-				}
-			}
+			if (g_ChangeHooksGamerules[i].HasCallBack(pContext))
+				return (cell_t)1;
 		}
 	}
 
