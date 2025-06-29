@@ -38,44 +38,13 @@ static cell_t Native_Hook(IPluginContext * pContext, const cell_t * params)
 		return pContext->ThrowNativeError("Invalid Edict Index %d", params[1]);
 
 	int entity = params[1];
-	char * name;
-	pContext->LocalToString(params[2], &name);
+	char * propName;
+	pContext->LocalToString(params[2], &propName);
+	CHECK_VALID_ENTITY_SENDPROP(entity, propName)
 
-	edict_t * pEnt = gamehelpers->EdictOfIndex(entity);
-	if (!pEnt)
- 		return pContext->ThrowNativeError("Invalid Edict Index %d, edict_t is null.", entity);
-
-	ServerClass * sc = pEnt->GetNetworkable()->GetServerClass();
-	
-	if (!sc)
-		return pContext->ThrowNativeError("Cannot find ServerClass for entity %d", entity);
-
-	sm_sendprop_info_t info;
-	gamehelpers->FindSendPropInfo(sc->GetName(), name, &info);
-	SendProp * pProp = info.prop;
-
-	if (!pProp)
-		return pContext->ThrowNativeError("Could not find prop %s", name);
-
+	SendProp *pProp = info.prop;
 	PropType propType = static_cast<PropType>(params[3]);
-	if (!IsPropValid(pProp, propType))
-	{
-		switch (propType)
-		{
-			case PropType::Prop_Int: 
-				return pContext->ThrowNativeError("Prop %s is not an int!", pProp->GetName());
-			case PropType::Prop_Float:
-				return pContext->ThrowNativeError("Prop %s is not a float!", pProp->GetName());
-			case PropType::Prop_String:
-				return pContext->ThrowNativeError("Prop %s is not a string!", pProp->GetName());
-			case PropType::Prop_Bool:
-				return pContext->ThrowNativeError("Prop %s is not a bool!", pProp->GetName());
-			case PropType::Prop_Vector:
-				return pContext->ThrowNativeError("Prop %s is not a vector!", pProp->GetName());
-			default:
-				return pContext->ThrowNativeError("Unsupported prop type %d", propType);
-		}
-	}
+	CHECK_PROP_BASE_DATA_TYPE(pProp, propType)
 	
 	SendPropHook hook;
 	hook.objectID = entity;
@@ -127,20 +96,7 @@ static cell_t Native_Unhook(IPluginContext * pContext, const cell_t * params)
 	int entity = params[1];
 	char * propName;
 	pContext->LocalToString(params[2], &propName);
-
-	edict_t * pEnt = gamehelpers->EdictOfIndex(entity);
-	if (!pEnt)
- 		return pContext->ThrowNativeError("Invalid Edict Index %d, edict_t is null.", entity);
-
-	ServerClass * sc = pEnt->GetNetworkable()->GetServerClass();
-
-	if (!sc)
-		return pContext->ThrowNativeError("Cannot find ServerClass for entity %d", entity);
-
-	sm_sendprop_info_t info;
-	gamehelpers->FindSendPropInfo(sc->GetName(), propName, &info);
-	if (!info.prop)
-		return pContext->ThrowNativeError("Could not find prop %s", propName);
+	CHECK_VALID_ENTITY_SENDPROP(entity, propName)
 
 	IPluginFunction * pFunction = pContext->GetFunctionById(params[3]);
 	for (int i = 0; i < g_Hooks.Count(); i++)
@@ -165,34 +121,10 @@ static cell_t Native_Unhook(IPluginContext * pContext, const cell_t * params)
 static cell_t Native_HookGameRules(IPluginContext * pContext, const cell_t * params)
 {
 	char * name;
-	pContext->LocalToString(params[1], &name);
-	sm_sendprop_info_t info;
-
-	gamehelpers->FindSendPropInfo(g_szGameRulesProxy, name, &info);
-	SendProp * pProp = info.prop;
-
-	if (!pProp)
-		return pContext->ThrowNativeError("Could not find prop %s", name);
+	CHECK_VALID_GAMERULES_SENDPROP(name)
 
 	PropType propType = static_cast<PropType>(params[2]);
-	if (!IsPropValid(pProp, propType))
-	{
-		switch (propType)
-		{
-			case PropType::Prop_Int: 
-				return pContext->ThrowNativeError("Prop %s is not an int!", pProp->GetName());
-			case PropType::Prop_Float:
-				return pContext->ThrowNativeError("Prop %s is not a float!", pProp->GetName());
-			case PropType::Prop_String:
-				return pContext->ThrowNativeError("Prop %s is not a string!", pProp->GetName());
-			case PropType::Prop_Bool:
-				return pContext->ThrowNativeError("Prop %s is not a bool!", pProp->GetName());
-			case PropType::Prop_Vector:
-				return pContext->ThrowNativeError("Prop %s is not a vector!", pProp->GetName());
-			default:
-				return pContext->ThrowNativeError("Unsupported prop type %d", propType);
-		}
-	}
+	CHECK_PROP_BASE_DATA_TYPE(pProp, propType)
 
 	SendPropHookGamerules hook;
 	hook.sCallbackInfo.pCallback = (void *)pContext->GetFunctionById(params[3]);
@@ -237,19 +169,14 @@ static cell_t Native_HookGameRules(IPluginContext * pContext, const cell_t * par
 static cell_t Native_UnhookGameRules(IPluginContext * pContext, const cell_t * params)
 {
 	char * propName;
-	pContext->LocalToString(params[1], &propName);
-
-	sm_sendprop_info_t info;
-	gamehelpers->FindSendPropInfo(g_szGameRulesProxy, propName, &info);
-	if (!info.prop)
-		return pContext->ThrowNativeError("Could not find prop %s", propName);
+	CHECK_VALID_GAMERULES_SENDPROP(propName)	
 
 	IPluginFunction * pFunction = pContext->GetFunctionById(params[2]);
 	for (int i = 0; i < g_HooksGamerules.Count(); i++)
 	{
 		//we check callback here, so, we do not need to check owner
 		if (g_HooksGamerules[i].sCallbackInfo.iCallbackType == CallBackType::Callback_PluginFunction && 
-			g_HooksGamerules[i].pVar == info.prop && 
+			g_HooksGamerules[i].pVar == pProp && 
 			strcmp(g_HooksGamerules[i].pVar->GetName(), propName) == 0 && 
 			g_HooksGamerules[i].sCallbackInfo.pCallback == (void *)pFunction)
 		{
@@ -269,94 +196,12 @@ static cell_t Native_HookArray(IPluginContext * pContext, const cell_t * params)
 	int entity = params[1];
 	char * propName;
 	pContext->LocalToString(params[2], &propName);
-	
-	edict_t * pEnt = gamehelpers->EdictOfIndex(entity);
-	if (!pEnt)
- 		return pContext->ThrowNativeError("Invalid Edict Index %d, edict_t is null.", entity);
-
-	ServerClass * sc = pEnt->GetNetworkable()->GetServerClass();
-
-	if (!sc)
-		return pContext->ThrowNativeError("Cannot find ServerClass for entity %d", entity);
-
-	sm_sendprop_info_t info;
-	gamehelpers->FindSendPropInfo(sc->GetName(), propName, &info);
-
-	if (!info.prop)
-		return pContext->ThrowNativeError("Could not find prop %s", propName);
+	CHECK_VALID_ENTITY_SENDPROP(entity, propName)
 
 	int element = params[3];
 	PropType propType = static_cast<PropType>(params[4]);
 	SendProp *pProp = NULL;
-	switch (info.prop->GetType())
-	{
-	case DPT_Array:
-		{
-			pProp = info.prop->GetArrayProp();
-			if (!pProp)
-				return pContext->ThrowNativeError("Prop %s does not contain any elements", propName);
-			
-			if (element > info.prop->GetNumElements())
-				return pContext->ThrowNativeError("Could not find element %d in %s", element, info.prop->GetName());
-			
-			if (!IsPropValid(pProp, propType))
-			{
-				switch (propType)
-				{
-					case PropType::Prop_Int: 
-						return pContext->ThrowNativeError("Prop %s is not an int!", pProp->GetName());
-					case PropType::Prop_Float:
-						return pContext->ThrowNativeError("Prop %s is not a float!", pProp->GetName());
-					case PropType::Prop_String:
-						return pContext->ThrowNativeError("Prop %s is not a string!", pProp->GetName());
-					case PropType::Prop_Bool:
-						return pContext->ThrowNativeError("Prop %s is not a bool!", pProp->GetName());
-					case PropType::Prop_Vector:
-						return pContext->ThrowNativeError("Prop %s is not a vector!", pProp->GetName());
-					default:
-						return pContext->ThrowNativeError("Unsupported prop type %d", propType);
-				}
-			}
-
-			break;
-		}
-	
-	case DPT_DataTable:
-		{
-			SendTable * st = info.prop->GetDataTable();
-
-			if (!st)
-				return pContext->ThrowNativeError("Prop %s does not contain any elements", propName);
-
-			pProp = st->GetProp(element);
-			if (!pProp)
-				return pContext->ThrowNativeError("Could not find element %d in %s", element, info.prop->GetName());
-
-			if (!IsPropValid(pProp, propType))
-			{
-				switch (propType)
-				{
-					case PropType::Prop_Int: 
-						return pContext->ThrowNativeError("Prop %s is not an int!", pProp->GetName());
-					case PropType::Prop_Float:
-						return pContext->ThrowNativeError("Prop %s is not a float!", pProp->GetName());
-					case PropType::Prop_String:
-						return pContext->ThrowNativeError("Prop %s is not a string!", pProp->GetName());
-					case PropType::Prop_Bool:
-						return pContext->ThrowNativeError("Prop %s is not a bool!", pProp->GetName());
-					case PropType::Prop_Vector:
-						return pContext->ThrowNativeError("Prop %s is not a vector!", pProp->GetName());
-					default:
-						return pContext->ThrowNativeError("Unsupported prop type %d", propType);
-				}
-			}
-
-			break;
-		}
-	
-	default:
-		return pContext->ThrowNativeError("Prop %s does not contain any elements", propName);
-	}
+	CHECK_ARRAYPROP_WITH_BASE_TYPE(element, propName)
 	
 	SendPropHook hook;
 	hook.objectID = entity;
@@ -408,58 +253,13 @@ static cell_t Native_UnhookArray(IPluginContext * pContext, const cell_t * param
 	int entity = params[1];
 	char * propName;
 	pContext->LocalToString(params[2], &propName);
-
-	edict_t * pEnt = gamehelpers->EdictOfIndex(entity);
-	if (!pEnt)
- 		return pContext->ThrowNativeError("Invalid Edict Index %d, edict_t is null.", entity);
-
-	ServerClass * sc = pEnt->GetNetworkable()->GetServerClass();
-
-	if (!sc)
-		return pContext->ThrowNativeError("Cannot find ServerClass for entity %d", entity);
-
-	sm_sendprop_info_t info;
-	gamehelpers->FindSendPropInfo(sc->GetName(), propName, &info);
-
-	if (!info.prop)
-		return pContext->ThrowNativeError("Could not find prop %s", propName);
+	CHECK_VALID_ENTITY_SENDPROP(entity, propName)
 
 	int element = params[3];
-	PropType propType = static_cast<PropType>(params[4]);
 	SendProp *pProp = NULL;
-	switch (info.prop->GetType())
-	{
-	case DPT_Array:
-		{
-			pProp = info.prop->GetArrayProp();
-			if (!pProp)
-				return pContext->ThrowNativeError("Prop %s does not contain any elements", propName);
-			
-			if (element > info.prop->GetNumElements())
-				return pContext->ThrowNativeError("Could not find element %d in %s", element, info.prop->GetName());
+	CHECK_ARRAYPROP_NO_BASE_TYPE(element, propName)
 
-			break;
-		}
-	
-	case DPT_DataTable:
-		{
-			SendTable * st = info.prop->GetDataTable();
-
-			if (!st)
-				return pContext->ThrowNativeError("Prop %s does not contain any elements", propName);
-
-			pProp = st->GetProp(element);
-			if (!pProp)
-				return pContext->ThrowNativeError("Could not find element %d in %s", element, info.prop->GetName());
-
-			break;
-		}
-	
-	default:
-		return pContext->ThrowNativeError("Prop %s does not contain any elements", propName);
-	}
-
-	IPluginFunction * callback = pContext->GetFunctionById(params[5]);
+	IPluginFunction * callback = pContext->GetFunctionById(params[4]);
 	for (int i = 0; i < g_Hooks.Count(); i++)
 	{
 		// we check callback here, so, we do not need to check owner
@@ -480,88 +280,17 @@ static cell_t Native_UnhookArray(IPluginContext * pContext, const cell_t * param
 	return (cell_t)0;
 }
 
+
 static cell_t Native_HookGamerulesArray(IPluginContext * pContext, const cell_t * params)
 {
 	char * propName;
-	pContext->LocalToString(params[1], &propName);
-
-	sm_sendprop_info_t info;
-	gamehelpers->FindSendPropInfo(g_szGameRulesProxy, propName, &info);
-	if (!info.prop)
-		return pContext->ThrowNativeError("Could not find prop %s", propName);
+	CHECK_VALID_GAMERULES_SENDPROP(propName)
 
 	int element = params[2];
 	PropType propType = static_cast<PropType>(params[3]);
-	SendProp *pProp = NULL;
-	switch (info.prop->GetType())
-	{
-	case DPT_Array:
-		{
-			pProp = info.prop->GetArrayProp();
-			if (!pProp)
-				return pContext->ThrowNativeError("Prop %s does not contain any elements", propName);
-			
-			if (element > info.prop->GetNumElements())
-				return pContext->ThrowNativeError("Could not find element %d in %s", element, info.prop->GetName());
-			
-			if (!IsPropValid(pProp, propType))
-			{
-				switch (propType)
-				{
-					case PropType::Prop_Int: 
-						return pContext->ThrowNativeError("Prop %s is not an int!", pProp->GetName());
-					case PropType::Prop_Float:
-						return pContext->ThrowNativeError("Prop %s is not a float!", pProp->GetName());
-					case PropType::Prop_String:
-						return pContext->ThrowNativeError("Prop %s is not a string!", pProp->GetName());
-					case PropType::Prop_Bool:
-						return pContext->ThrowNativeError("Prop %s is not a bool!", pProp->GetName());
-					case PropType::Prop_Vector:
-						return pContext->ThrowNativeError("Prop %s is not a vector!", pProp->GetName());
-					default:
-						return pContext->ThrowNativeError("Unsupported prop type %d", propType);
-				}
-			}
 
-			break;
-		}
-	
-	case DPT_DataTable:
-		{
-			SendTable * st = info.prop->GetDataTable();
-
-			if (!st)
-				return pContext->ThrowNativeError("Prop %s does not contain any elements", propName);
-
-			pProp = st->GetProp(element);
-			if (!pProp)
-				return pContext->ThrowNativeError("Could not find element %d in %s", element, info.prop->GetName());
-
-			if (!IsPropValid(pProp, propType))
-			{
-				switch (propType)
-				{
-					case PropType::Prop_Int: 
-						return pContext->ThrowNativeError("Prop %s is not an int!", pProp->GetName());
-					case PropType::Prop_Float:
-						return pContext->ThrowNativeError("Prop %s is not a float!", pProp->GetName());
-					case PropType::Prop_String:
-						return pContext->ThrowNativeError("Prop %s is not a string!", pProp->GetName());
-					case PropType::Prop_Bool:
-						return pContext->ThrowNativeError("Prop %s is not a bool!", pProp->GetName());
-					case PropType::Prop_Vector:
-						return pContext->ThrowNativeError("Prop %s is not a vector!", pProp->GetName());
-					default:
-						return pContext->ThrowNativeError("Unsupported prop type %d", propType);
-				}
-			}
-
-			break;
-		}
-	
-	default:
-		return pContext->ThrowNativeError("Prop %s does not contain any elements", propName);
-	}
+	pProp = NULL;
+	CHECK_ARRAYPROP_WITH_BASE_TYPE(element, propName)
 	
 	SendPropHookGamerules hook;
 	hook.sCallbackInfo.pCallback = (void *)pContext->GetFunctionById(params[4]);
@@ -606,50 +335,14 @@ static cell_t Native_HookGamerulesArray(IPluginContext * pContext, const cell_t 
 static cell_t Native_UnhookGamerulesArray(IPluginContext * pContext, const cell_t * params)
 {
 	char * propName;
-	pContext->LocalToString(params[1], &propName);
-
-	sm_sendprop_info_t info;
-	gamehelpers->FindSendPropInfo(g_szGameRulesProxy, propName, &info);
-	if (!info.prop)
-		return pContext->ThrowNativeError("Could not find prop %s", propName);
+	CHECK_VALID_GAMERULES_SENDPROP(propName)
 
 	int element = params[2];
-	PropType propType = static_cast<PropType>(params[3]);
-	SendProp *pProp = NULL;
-	switch (info.prop->GetType())
-	{
-	case DPT_Array:
-		{
-			pProp = info.prop->GetArrayProp();
-			if (!pProp)
-				return pContext->ThrowNativeError("Prop %s does not contain any elements", propName);
-			
-			if (element > info.prop->GetNumElements())
-				return pContext->ThrowNativeError("Could not find element %d in %s", element, info.prop->GetName());
 
-			break;
-		}
-	
-	case DPT_DataTable:
-		{
-			SendTable * st = info.prop->GetDataTable();
+	pProp = NULL;
+	CHECK_ARRAYPROP_NO_BASE_TYPE(element, propName)
 
-			if (!st)
-				return pContext->ThrowNativeError("Prop %s does not contain any elements", propName);
-
-			pProp = st->GetProp(element);
-			if (!pProp)
-				return pContext->ThrowNativeError("Could not find element %d in %s", element, info.prop->GetName());
-
-			break;
-		}
-	
-	default:
-		return pContext->ThrowNativeError("Prop %s does not contain any elements", propName);
-	}
-
-	PropType iPropType = static_cast<PropType>(params[3]);
-	IPluginFunction * pFunction = pContext->GetFunctionById(params[4]);
+	IPluginFunction * pFunction = pContext->GetFunctionById(params[3]);
 	for (int i = 0; i < g_HooksGamerules.Count(); i++)
 	{
 		if (g_HooksGamerules[i].Element == element && 
@@ -675,23 +368,9 @@ static cell_t Native_IsHooked(IPluginContext * pContext, const cell_t * params)
 	int entity = params[1];
 	char * name;
 	pContext->LocalToString(params[2], &name);
+	CHECK_VALID_ENTITY_SENDPROP(entity, name)
 
-	edict_t * pEnt = gamehelpers->EdictOfIndex(entity);
-	if (!pEnt)
- 		return pContext->ThrowNativeError("Invalid Edict Index %d, edict_t is null.", entity);
-
-	ServerClass * sc = pEnt->GetNetworkable()->GetServerClass();
-	
-	if (!sc)
-		return pContext->ThrowNativeError("Cannot find ServerClass for entity %d", entity);
-
-	sm_sendprop_info_t info;
-	gamehelpers->FindSendPropInfo(sc->GetName(), name, &info);
-	SendProp * pProp = info.prop;
-
-	if (!pProp)
-		return pContext->ThrowNativeError("Could not find prop %s", name);
-
+	SendProp *pProp = info.prop;
 	for (int i = 0; i < g_Hooks.Count(); i++)
 	{
 		if (g_Hooks[i].objectID == entity && 
@@ -710,14 +389,7 @@ static cell_t Native_IsHooked(IPluginContext * pContext, const cell_t * params)
 static cell_t Native_IsGameRulesHooked(IPluginContext * pContext, const cell_t * params)
 {
 	char * propName;
-	pContext->LocalToString(params[1], &propName);
-
-	sm_sendprop_info_t info;
-	gamehelpers->FindSendPropInfo(g_szGameRulesProxy, propName, &info);
-	SendProp * pProp = info.prop;
-
-	if (!pProp)
-		return pContext->ThrowNativeError("Could not find prop %s", propName);
+	CHECK_VALID_GAMERULES_SENDPROP(propName)
 
 	for (int i = 0; i < g_HooksGamerules.Count(); i++)
 	{
@@ -740,56 +412,12 @@ static cell_t Native_IsArrayHooked(IPluginContext * pContext, const cell_t * par
 	int entity = params[1];
 	char * propName;
 	pContext->LocalToString(params[2], &propName);
-
-	edict_t * pEnt = gamehelpers->EdictOfIndex(entity);
-	if (!pEnt)
- 		return pContext->ThrowNativeError("Invalid Edict Index %d, edict_t is null.", entity);
-
-	ServerClass * sc = pEnt->GetNetworkable()->GetServerClass();
-
-	if (!sc)
-		return pContext->ThrowNativeError("Cannot find ServerClass for entity %d", entity);
-
-	sm_sendprop_info_t info;
-	gamehelpers->FindSendPropInfo(sc->GetName(), propName, &info);
-
-	if (!info.prop)
-		return pContext->ThrowNativeError("Could not find prop %s", propName);
+	CHECK_VALID_ENTITY_SENDPROP(entity, propName)
 
 	int element = params[3];
 	PropType propType = static_cast<PropType>(params[4]);
 	SendProp *pProp = NULL;
-	switch (info.prop->GetType())
-	{
-	case DPT_Array:
-		{
-			pProp = info.prop->GetArrayProp();
-			if (!pProp)
-				return pContext->ThrowNativeError("Prop %s does not contain any elements", propName);
-			
-			if (element > info.prop->GetNumElements())
-				return pContext->ThrowNativeError("Could not find element %d in %s", element, info.prop->GetName());
-
-			break;
-		}
-	
-	case DPT_DataTable:
-		{
-			SendTable * st = info.prop->GetDataTable();
-
-			if (!st)
-				return pContext->ThrowNativeError("Prop %s does not contain any elements", propName);
-
-			pProp = st->GetProp(element);
-			if (!pProp)
-				return pContext->ThrowNativeError("Could not find element %d in %s", element, info.prop->GetName());
-
-			break;
-		}
-	
-	default:
-		return pContext->ThrowNativeError("Prop %s does not contain any elements", propName);
-	}
+	CHECK_ARRAYPROP_NO_BASE_TYPE(element, propName)
 
 	for (int i = 0; i < g_Hooks.Count(); i++)
 	{
@@ -809,47 +437,13 @@ static cell_t Native_IsArrayHooked(IPluginContext * pContext, const cell_t * par
 static cell_t Native_IsGameRulesArrayHooked(IPluginContext * pContext, const cell_t * params)
 {
 	char * propName;
-	pContext->LocalToString(params[1], &propName);
-
-	sm_sendprop_info_t info;
-	gamehelpers->FindSendPropInfo(g_szGameRulesProxy, propName, &info);
-	if (!info.prop)
-		return pContext->ThrowNativeError("Could not find prop %s", propName);
+	CHECK_VALID_GAMERULES_SENDPROP(propName)
 
 	int element = params[2];
 	PropType propType = static_cast<PropType>(params[3]);
-	SendProp *pProp = NULL;
-	switch (info.prop->GetType())
-	{
-	case DPT_Array:
-		{
-			pProp = info.prop->GetArrayProp();
-			if (!pProp)
-				return pContext->ThrowNativeError("Prop %s does not contain any elements", propName);
-			
-			if (element > info.prop->GetNumElements())
-				return pContext->ThrowNativeError("Could not find element %d in %s", element, info.prop->GetName());
 
-			break;
-		}
-	
-	case DPT_DataTable:
-		{
-			SendTable * st = info.prop->GetDataTable();
-
-			if (!st)
-				return pContext->ThrowNativeError("Prop %s does not contain any elements", propName);
-
-			pProp = st->GetProp(element);
-			if (!pProp)
-				return pContext->ThrowNativeError("Could not find element %d in %s", element, info.prop->GetName());
-
-			break;
-		}
-	
-	default:
-		return pContext->ThrowNativeError("Prop %s does not contain any elements", propName);
-	}
+	pProp = NULL;
+	CHECK_ARRAYPROP_NO_BASE_TYPE(element, propName)
 
 	for (int i = 0; i < g_HooksGamerules.Count(); i++)
 	{
@@ -865,7 +459,6 @@ static cell_t Native_IsGameRulesArrayHooked(IPluginContext * pContext, const cel
 
 	return (cell_t)0;
 }
-
 static cell_t Native_HookChange(IPluginContext * pContext, const cell_t * params)
 {
 	bool bSafeCheck = params[0] >= 4;
@@ -875,24 +468,10 @@ static cell_t Native_HookChange(IPluginContext * pContext, const cell_t * params
 
 	int entity = params[1];
 	char * name;
-
-	edict_t * pEnt = gamehelpers->EdictOfIndex(entity);
-	if (!pEnt)
- 		return pContext->ThrowNativeError("Invalid Edict Index %d, edict_t is null.", entity);
-
 	pContext->LocalToString(params[2], &name);
-	ServerClass * sc = pEnt->GetNetworkable()->GetServerClass();
+	CHECK_VALID_ENTITY_SENDPROP(entity, name)
 
-	if (!sc)
-		return pContext->ThrowNativeError("Cannot find ServerClass for entity %d", entity);
-
-	sm_sendprop_info_t info;
-	gamehelpers->FindSendPropInfo(sc->GetName(), name, &info);
 	SendProp * pProp = info.prop;
-
-	if (!pProp)
-		return pContext->ThrowNativeError("Could not find prop %s", name);
-
 	IPluginFunction * callback = nullptr;
 	PropType propType = PropType::Prop_Max;
 	if (bSafeCheck)
@@ -905,23 +484,9 @@ static cell_t Native_HookChange(IPluginContext * pContext, const cell_t * params
 		callback = pContext->GetFunctionById(params[3]);
 	}
 
-	if (bSafeCheck && !IsPropValid(pProp, propType))
+	if (bSafeCheck)
 	{
-		switch (propType)
-		{
-		case PropType::Prop_Int:
-			return pContext->ThrowNativeError("Prop %s is not an int!", pProp->GetName());
-		case PropType::Prop_Float:
-			return pContext->ThrowNativeError("Prop %s is not a float!", pProp->GetName());
-		case PropType::Prop_String:
-			return pContext->ThrowNativeError("Prop %s is not a string!", pProp->GetName());
-		case PropType::Prop_Bool:
-			return pContext->ThrowNativeError("Prop %s is not a bool!", pProp->GetName());
-		case PropType::Prop_Vector:
-			return pContext->ThrowNativeError("Prop %s is not a vector!", pProp->GetName());
-		default:
-			return pContext->ThrowNativeError("Unsupported prop type %d", propType);
-		}
+		CHECK_PROP_BASE_DATA_TYPE(pProp, propType)
 	}
 
 	PropChangeHook hook;
@@ -936,7 +501,7 @@ static cell_t Native_HookChange(IPluginContext * pContext, const cell_t * params
 	sCallInfo.pOwner = (void *)pContext;
 
 	if (!g_SendProxyManager.AddChangeHookToList(hook, &sCallInfo))
-		return pContext->ThrowNativeError("Entity %d isn't valid", entity);
+		return pContext->ThrowNativeError("Failed to hook entity %d with prop %s on this callback: this combination may already hooked.", entity, name);
 
 	return (cell_t)1;
 }
@@ -948,75 +513,38 @@ static cell_t Native_UnhookChange(IPluginContext * pContext, const cell_t * para
 
 	int entity = params[1];
 	char * name;
-
-	edict_t * pEnt = gamehelpers->EdictOfIndex(entity);
-	if (!pEnt)
- 		return pContext->ThrowNativeError("Invalid Edict Index %d, edict_t is null.", entity);
-
 	pContext->LocalToString(params[2], &name);
-	ServerClass * sc = pEnt->GetNetworkable()->GetServerClass();
-
-	if (!sc)
-		return pContext->ThrowNativeError("Cannot find ServerClass for entity %d", entity);
-
-	sm_sendprop_info_t info;
-	gamehelpers->FindSendPropInfo(sc->GetName(), name, &info);
-	if (!info.prop)
-		return pContext->ThrowNativeError("Could not find prop %s", name);
+	CHECK_VALID_ENTITY_SENDPROP(entity, name)
 
 	IPluginFunction * callback = pContext->GetFunctionById(params[3]);
 
-	bool bFoundCallBack = false;
-	bool bFound = false;
-	for (int i = 0; i < g_ChangeHooks.Count(); i++)
+	PropChangeHook hook;
+	hook.objectID = entity;
+	hook.pVar = info.prop;
+	hook.Offset = info.actual_offset;
+	hook.SendPropType = info.prop->GetType();
+
+	int i = g_ChangeHooks.Find(hook);
+	if (g_ChangeHooks.IsValidIndex(i))
 	{
-		auto pCallBacks =  g_ChangeHooks[i].vCallbacksInfo;
-		if (pCallBacks->Count())
-		{
-			for (int j = 0; j < pCallBacks->Count(); j++)
-			{
-				if ((*pCallBacks)[j].pCallback == (void *)callback && (*pCallBacks)[j].pOwner == (void *)pContext)
-				{
-					bFoundCallBack = true;
-					break;
-				}
-			}
-		}
-
-		if (!bFoundCallBack)
-   			continue;
-
-		if (g_ChangeHooks[i].objectID == entity && 
-			g_ChangeHooks[i].pVar == info.prop &&
-			g_ChangeHooks[i].Offset == info.actual_offset &&
-   			g_ChangeHooks[i].SendPropType == info.prop->GetType())
-		{
-			CallBackInfo sInfo;
-			sInfo.pCallback = callback;
-			sInfo.pOwner = (void *)pContext;
-			sInfo.iCallbackType = CallBackType::Callback_PluginFunction;
-			g_SendProxyManager.UnhookChange(i, &sInfo);
-			bFound = true;
-			break;
-		}
+		CallBackInfo sInfo;
+		sInfo.pCallback = (void *)callback;
+		sInfo.pOwner = (void *)pContext;
+		sInfo.iCallbackType = CallBackType::Callback_PluginFunction;
+		g_SendProxyManager.UnhookChange(i, &sInfo);
+		return (cell_t)1;
 	}
 
-	return bFound ? (cell_t)1 : (cell_t)0;
+	return (cell_t)0;
 }
 
 static cell_t Native_HookGameRulesChange(IPluginContext * pContext, const cell_t * params)
 {
 	bool bSafeCheck = params[0] >= 3;
+
 	char * name;
+	CHECK_VALID_GAMERULES_SENDPROP(name)
 
-	pContext->LocalToString(params[1], &name);
-	sm_sendprop_info_t info;
-	gamehelpers->FindSendPropInfo(g_szGameRulesProxy, name, &info);
-	SendProp * pProp = info.prop;
-
-	if (!pProp)
-		return pContext->ThrowNativeError("Could not find prop %s", name);
-	
 	IPluginFunction * callback = nullptr;
 	PropType propType = PropType::Prop_Max;
 	if (bSafeCheck)
@@ -1029,32 +557,9 @@ static cell_t Native_HookGameRulesChange(IPluginContext * pContext, const cell_t
 		callback = pContext->GetFunctionById(params[2]);
 	}
 
-	if (bSafeCheck && !IsPropValid(pProp, propType))
+	if (bSafeCheck)
 	{
-		switch (propType)
-		{
-		case PropType::Prop_Int:
-			return pContext->ThrowNativeError("Prop %s is not an int!", pProp->GetName());
-		case PropType::Prop_Float:
-			return pContext->ThrowNativeError("Prop %s is not a float!", pProp->GetName());
-		case PropType::Prop_String:
-			return pContext->ThrowNativeError("Prop %s is not a string!", pProp->GetName());
-		case PropType::Prop_Bool:
-			return pContext->ThrowNativeError("Prop %s is not a bool!", pProp->GetName());
-		case PropType::Prop_Vector:
-			return pContext->ThrowNativeError("Prop %s is not a vector!", pProp->GetName());
-		default:
-			return pContext->ThrowNativeError("Unsupported prop type %d", propType);
-		}
-	}
-
-	if (!g_pGameRules)
-	{
-		g_pGameRules = g_pSDKTools->GetGameRules();
-		if (!g_pGameRules)
-		{
-			return pContext->ThrowNativeError("CRITICAL ERROR: Could not get gamerules pointer!");
-		}
+		CHECK_PROP_BASE_DATA_TYPE(pProp, propType)
 	}
 
 	PropChangeHookGamerules hook;
@@ -1068,7 +573,7 @@ static cell_t Native_HookGameRulesChange(IPluginContext * pContext, const cell_t
 	sCallInfo.pOwner = (void *)pContext;
 
 	if (!g_SendProxyManager.AddChangeHookToListGamerules(hook, &sCallInfo))
-		return pContext->ThrowNativeError("Prop type %d isn't valid", pProp->GetType()); //should never happen
+		return pContext->ThrowNativeError("Failed to hook prop %s with this callback: This combination may already hooked.", name);
 
 	return (cell_t)1;
 }
@@ -1076,49 +581,27 @@ static cell_t Native_HookGameRulesChange(IPluginContext * pContext, const cell_t
 static cell_t Native_UnhookGameRulesChange(IPluginContext * pContext, const cell_t * params)
 {
 	char * name;
-	pContext->LocalToString(params[1], &name);
+	CHECK_VALID_GAMERULES_SENDPROP(name)
+
 	IPluginFunction * callback = pContext->GetFunctionById(params[2]);
 
-	sm_sendprop_info_t info;
-	gamehelpers->FindSendPropInfo(g_szGameRulesProxy, name, &info);
-	if (!info.prop)
-		return pContext->ThrowNativeError("Could not find prop %s", name);
+	PropChangeHookGamerules hook;
+	hook.pVar = info.prop;
+	hook.Offset = info.actual_offset;
+	hook.SendPropType = info.prop->GetType();
 
-	bool bFoundCallBack = false;
-	bool bFound = false;
-	for (int i = 0; i < g_ChangeHooksGamerules.Count(); i++)
+	int i = g_ChangeHooksGamerules.Find(hook);
+	if (g_ChangeHooksGamerules.IsValidIndex(i))
 	{
-		auto pCallBacks =  g_ChangeHooksGamerules[i].vCallbacksInfo;
-		if (pCallBacks->Count())
-		{
-			for (int j = 0; j < pCallBacks->Count(); j++)
-			{
-				if ((*pCallBacks)[j].pCallback == (void *)callback && (*pCallBacks)[j].pOwner == (void *)pContext)
-				{
-					bFoundCallBack = true;
-					break;
-				}
-			}
-		}
-
-		if (!bFoundCallBack)
-			continue;
-
-		if (g_ChangeHooksGamerules[i].pVar == info.prop &&
-			g_ChangeHooksGamerules[i].Offset == info.actual_offset &&
-   			g_ChangeHooksGamerules[i].SendPropType == info.prop->GetType())
-		{
-			CallBackInfo sInfo;
-			sInfo.pCallback = callback;
-			sInfo.pOwner = (void *)pContext;
-			sInfo.iCallbackType = CallBackType::Callback_PluginFunction;
-			g_SendProxyManager.UnhookChangeGamerules(i, &sInfo);
-			bFound = true;
-			break;
-		}
+		CallBackInfo sInfo;
+		sInfo.pCallback = (void *)callback;
+		sInfo.pOwner = (void *)pContext;
+		sInfo.iCallbackType = CallBackType::Callback_PluginFunction;
+		g_SendProxyManager.UnhookChangeGamerules(i, &sInfo);
+		return (cell_t)1;
 	}
 
-	return bFound ? (cell_t)1 : (cell_t)0;
+	return (cell_t)0;
 }
 
 static cell_t Native_HookArrayChange(IPluginContext * pContext, const cell_t * params)
@@ -1128,95 +611,13 @@ static cell_t Native_HookArrayChange(IPluginContext * pContext, const cell_t * p
 
 	int entity = params[1];
 	char * name;
-	
-	edict_t * pEnt = gamehelpers->EdictOfIndex(entity);
-	if (!pEnt)
- 		return pContext->ThrowNativeError("Invalid Edict Index %d, edict_t is null.", entity);
-
 	pContext->LocalToString(params[2], &name);
-	ServerClass * sc = pEnt->GetNetworkable()->GetServerClass();
-
-	if (!sc)
-		return pContext->ThrowNativeError("Cannot find ServerClass for entity %d", entity);
-
-	sm_sendprop_info_t info;
-	gamehelpers->FindSendPropInfo(sc->GetName(), name, &info);
-
-	if (!info.prop)
-		return pContext->ThrowNativeError("Could not find prop %s", name);
+	CHECK_VALID_ENTITY_SENDPROP(entity, name)
 
 	int element = params[3];
 	PropType propType = static_cast<PropType>(params[4]);
 	SendProp *pProp = NULL;
-	switch (info.prop->GetType())
-	{
-	case DPT_Array:
-		{
-			pProp = info.prop->GetArrayProp();
-			if (!pProp)
-				return pContext->ThrowNativeError("Prop %s does not contain any elements", name);
-			
-			if (element > info.prop->GetNumElements())
-				return pContext->ThrowNativeError("Could not find element %d in %s", element, info.prop->GetName());
-			
-			if (!IsPropValid(pProp, propType))
-			{
-				switch (propType)
-				{
-					case PropType::Prop_Int: 
-						return pContext->ThrowNativeError("Prop %s is not an int!", pProp->GetName());
-					case PropType::Prop_Float:
-						return pContext->ThrowNativeError("Prop %s is not a float!", pProp->GetName());
-					case PropType::Prop_String:
-						return pContext->ThrowNativeError("Prop %s is not a string!", pProp->GetName());
-					case PropType::Prop_Bool:
-						return pContext->ThrowNativeError("Prop %s is not a bool!", pProp->GetName());
-					case PropType::Prop_Vector:
-						return pContext->ThrowNativeError("Prop %s is not a vector!", pProp->GetName());
-					default:
-						return pContext->ThrowNativeError("Unsupported prop type %d", propType);
-				}
-			}
-
-			break;
-		}
-	
-	case DPT_DataTable:
-		{
-			SendTable * st = info.prop->GetDataTable();
-
-			if (!st)
-				return pContext->ThrowNativeError("Prop %s does not contain any elements", name);
-
-			pProp = st->GetProp(element);
-			if (!pProp)
-				return pContext->ThrowNativeError("Could not find element %d in %s", element, info.prop->GetName());
-
-			if (!IsPropValid(pProp, propType))
-			{
-				switch (propType)
-				{
-					case PropType::Prop_Int: 
-						return pContext->ThrowNativeError("Prop %s is not an int!", pProp->GetName());
-					case PropType::Prop_Float:
-						return pContext->ThrowNativeError("Prop %s is not a float!", pProp->GetName());
-					case PropType::Prop_String:
-						return pContext->ThrowNativeError("Prop %s is not a string!", pProp->GetName());
-					case PropType::Prop_Bool:
-						return pContext->ThrowNativeError("Prop %s is not a bool!", pProp->GetName());
-					case PropType::Prop_Vector:
-						return pContext->ThrowNativeError("Prop %s is not a vector!", pProp->GetName());
-					default:
-						return pContext->ThrowNativeError("Unsupported prop type %d", propType);
-				}
-			}
-
-			break;
-		}
-	
-	default:
-		return pContext->ThrowNativeError("Prop %s does not contain any elements", name);
-	}
+	CHECK_ARRAYPROP_WITH_BASE_TYPE(element, name)
 	
 	PropChangeHook hook;
 	hook.objectID = entity;
@@ -1231,7 +632,7 @@ static cell_t Native_HookArrayChange(IPluginContext * pContext, const cell_t * p
 	sCallInfo.pOwner = (void *)pContext;
 
 	if (!g_SendProxyManager.AddChangeHookToList(hook, &sCallInfo))
-		return pContext->ThrowNativeError("Entity %d isn't valid", entity);
+		return pContext->ThrowNativeError("Failed to hook entity %d with prop %s on this callback: this combination may already hooked.", entity, name);
 
 	return (cell_t)1;
 }
@@ -1243,180 +644,46 @@ static cell_t Native_UnhookArrayChange(IPluginContext * pContext, const cell_t *
 	
 	int entity = params[1];
 	char * name;
-
-	edict_t * pEnt = gamehelpers->EdictOfIndex(entity);
-	if (!pEnt)
- 		return pContext->ThrowNativeError("Invalid Edict Index %d, edict_t is null.", entity);
-
 	pContext->LocalToString(params[2], &name);
-	ServerClass * sc = pEnt->GetNetworkable()->GetServerClass();
-
-	if (!sc)
-		return pContext->ThrowNativeError("Cannot find ServerClass for entity %d", entity);
-	
-	sm_sendprop_info_t info;
-	gamehelpers->FindSendPropInfo(sc->GetName(), name, &info);
-	if (!info.prop)
-		return pContext->ThrowNativeError("Could not find prop %s", name);
+	CHECK_VALID_ENTITY_SENDPROP(entity, name)
 
 	SendProp *pProp = NULL;
 	int element = params[3];
-	switch (info.prop->GetType())
-	{
-	case DPT_Array:
-		{
-			pProp = info.prop->GetArrayProp();
-			if (!pProp)
-				return pContext->ThrowNativeError("Prop %s does not contain any elements", name);
-			
-			if (element > info.prop->GetNumElements())
-				return pContext->ThrowNativeError("Could not find element %d in %s", element, info.prop->GetName());
-
-			break;
-		}
-	
-	case DPT_DataTable:
-		{
-			SendTable * st = info.prop->GetDataTable();
-
-			if (!st)
-				return pContext->ThrowNativeError("Prop %s does not contain any elements", name);
-
-			pProp = st->GetProp(element);
-			if (!pProp)
-				return pContext->ThrowNativeError("Could not find element %d in %s", element, info.prop->GetName());
-
-			break;
-		}
-	
-	default:
-		return pContext->ThrowNativeError("Prop %s does not contain any elements", name);
-	}
+	CHECK_ARRAYPROP_NO_BASE_TYPE(element, name)
 
 	IPluginFunction *callback = pContext->GetFunctionById(params[4]);
 
-	bool bFoundCallBack = false;
-	bool bFound = false;
-	for (int i = 0; i < g_ChangeHooks.Count(); i++)
+	PropChangeHook hook;
+	hook.objectID = entity;
+	hook.Element = element;
+	hook.SendPropType = info.prop->GetType();
+	hook.pVar = pProp;
+	hook.Offset = info.actual_offset + pProp->GetOffset();
+
+	int i = g_ChangeHooks.Find(hook);
+	if (g_ChangeHooks.IsValidIndex(i))
 	{
-		auto pCallBacks =  g_ChangeHooks[i].vCallbacksInfo;
-		if (pCallBacks->Count())
-		{
-			for (int j = 0; j < pCallBacks->Count(); j++)
-			{
-				if ((*pCallBacks)[j].pCallback == (void *)callback && (*pCallBacks)[j].pOwner == (void *)pContext)
-				{
-					bFoundCallBack = true;
-					break;
-				}
-			}
-		}
-
-		if (!bFoundCallBack)
-			continue;
-
-		if (g_ChangeHooks[i].objectID == entity && 
-			g_ChangeHooks[i].Element == element && 
-			g_ChangeHooks[i].SendPropType == info.prop->GetType() &&
-			g_ChangeHooks[i].pVar == pProp &&
-			g_ChangeHooks[i].Offset == info.actual_offset + pProp->GetOffset())
-		{
-			CallBackInfo sInfo;
-			sInfo.pCallback = (void *)callback;
-			sInfo.pOwner = (void *)pContext;
-			sInfo.iCallbackType = CallBackType::Callback_PluginFunction;
-			g_SendProxyManager.UnhookChange(i, &sInfo);
-			bFound = true;
-			break;
-		}
+		CallBackInfo sInfo;
+		sInfo.pCallback = (void *)callback;
+		sInfo.pOwner = (void *)pContext;
+		sInfo.iCallbackType = CallBackType::Callback_PluginFunction;
+		g_SendProxyManager.UnhookChange(i, &sInfo);
+		return (cell_t)1;
 	}
 
-	return bFound ? (cell_t)1 : (cell_t)0;
+	return (cell_t)0;
 }
 
 static cell_t Native_HookGameRulesArrayChange(IPluginContext * pContext, const cell_t * params)
 {
 	char * name;
-	pContext->LocalToString(params[1], &name);
-	sm_sendprop_info_t info;
-
-	gamehelpers->FindSendPropInfo(g_szGameRulesProxy, name, &info);
-
-	if (!info.prop)
-		return pContext->ThrowNativeError("Could not find prop %s", name);
+	CHECK_VALID_GAMERULES_SENDPROP(name)
 	
 	int element = params[2];
 	PropType propType = static_cast<PropType>(params[3]);
-	SendProp *pProp = NULL;
-	switch (info.prop->GetType())
-	{
-	case DPT_Array:
-		{
-			pProp = info.prop->GetArrayProp();
-			if (!pProp)
-				return pContext->ThrowNativeError("Prop %s does not contain any elements", name);
-			
-			if (element > info.prop->GetNumElements())
-				return pContext->ThrowNativeError("Could not find element %d in %s", element, info.prop->GetName());
-			
-			if (!IsPropValid(pProp, propType))
-			{
-				switch (propType)
-				{
-					case PropType::Prop_Int: 
-						return pContext->ThrowNativeError("Prop %s is not an int!", pProp->GetName());
-					case PropType::Prop_Float:
-						return pContext->ThrowNativeError("Prop %s is not a float!", pProp->GetName());
-					case PropType::Prop_String:
-						return pContext->ThrowNativeError("Prop %s is not a string!", pProp->GetName());
-					case PropType::Prop_Bool:
-						return pContext->ThrowNativeError("Prop %s is not a bool!", pProp->GetName());
-					case PropType::Prop_Vector:
-						return pContext->ThrowNativeError("Prop %s is not a vector!", pProp->GetName());
-					default:
-						return pContext->ThrowNativeError("Unsupported prop type %d", propType);
-				}
-			}
 
-			break;
-		}
-	
-	case DPT_DataTable:
-		{
-			SendTable * st = info.prop->GetDataTable();
-
-			if (!st)
-				return pContext->ThrowNativeError("Prop %s does not contain any elements", name);
-
-			pProp = st->GetProp(element);
-			if (!pProp)
-				return pContext->ThrowNativeError("Could not find element %d in %s", element, info.prop->GetName());
-
-			if (!IsPropValid(pProp, propType))
-			{
-				switch (propType)
-				{
-					case PropType::Prop_Int: 
-						return pContext->ThrowNativeError("Prop %s is not an int!", pProp->GetName());
-					case PropType::Prop_Float:
-						return pContext->ThrowNativeError("Prop %s is not a float!", pProp->GetName());
-					case PropType::Prop_String:
-						return pContext->ThrowNativeError("Prop %s is not a string!", pProp->GetName());
-					case PropType::Prop_Bool:
-						return pContext->ThrowNativeError("Prop %s is not a bool!", pProp->GetName());
-					case PropType::Prop_Vector:
-						return pContext->ThrowNativeError("Prop %s is not a vector!", pProp->GetName());
-					default:
-						return pContext->ThrowNativeError("Unsupported prop type %d", propType);
-				}
-			}
-
-			break;
-		}
-	
-	default:
-		return pContext->ThrowNativeError("Prop %s does not contain any elements", name);
-	}
+	pProp = NULL;
+	CHECK_ARRAYPROP_WITH_BASE_TYPE(element, name)
 
 	PropChangeHookGamerules hook;
 	hook.Offset = info.actual_offset + pProp->GetOffset();
@@ -1430,7 +697,7 @@ static cell_t Native_HookGameRulesArrayChange(IPluginContext * pContext, const c
 	sCallInfo.pOwner = (void *)pContext;
 
 	if (!g_SendProxyManager.AddChangeHookToListGamerules(hook, &sCallInfo))
-		return pContext->ThrowNativeError("Prop type %d isn't valid", pProp->GetType()); //should never happen
+		return pContext->ThrowNativeError("Failed to hook prop %s with this callback: This combination may already hooked.", name);
 
 	return (cell_t)1;
 }
@@ -1438,85 +705,32 @@ static cell_t Native_HookGameRulesArrayChange(IPluginContext * pContext, const c
 static cell_t Native_UnhookGameRulesArrayChange(IPluginContext * pContext, const cell_t * params)
 {
 	char * name;
-	pContext->LocalToString(params[1], &name);
-	sm_sendprop_info_t info;
-	gamehelpers->FindSendPropInfo(g_szGameRulesProxy, name, &info);
-
-	if (!info.prop)
-		return pContext->ThrowNativeError("Could not find prop %s", name);
+	CHECK_VALID_GAMERULES_SENDPROP(name)
 	
 	int element = params[2];
-	SendProp *pProp = NULL;
-	switch (info.prop->GetType())
-	{
-	case DPT_Array:
-		{
-			pProp = info.prop->GetArrayProp();
-			if (!pProp)
-				return pContext->ThrowNativeError("Prop %s does not contain any elements", name);
-			
-			if (element > info.prop->GetNumElements())
-				return pContext->ThrowNativeError("Could not find element %d in %s", element, info.prop->GetName());
-
-			break;
-		}
-	
-	case DPT_DataTable:
-		{
-			SendTable * st = info.prop->GetDataTable();
-
-			if (!st)
-				return pContext->ThrowNativeError("Prop %s does not contain any elements", name);
-
-			pProp = st->GetProp(element);
-			if (!pProp)
-				return pContext->ThrowNativeError("Could not find element %d in %s", element, info.prop->GetName());
-
-			break;
-		}
-	
-	default:
-		return pContext->ThrowNativeError("Prop %s does not contain any elements", name);
-	}
+	pProp = NULL;
+	CHECK_ARRAYPROP_NO_BASE_TYPE(element, name)
 	
 	IPluginFunction * callback = pContext->GetFunctionById(params[3]);
 
-	bool bFoundCallBack = false;
-	bool bFound = false;
-	for (int i = 0; i < g_ChangeHooksGamerules.Count(); i++)
+	PropChangeHookGamerules hook;
+	hook.pVar = pProp;
+	hook.Element = element;
+	hook.SendPropType = info.prop->GetType();
+	hook.Offset = info.actual_offset + pProp->GetOffset();
+
+	int i = g_ChangeHooksGamerules.Find(hook);
+	if (g_ChangeHooksGamerules.IsValidIndex(i))
 	{
-		auto pCallBacks =  g_ChangeHooksGamerules[i].vCallbacksInfo;
-		if (pCallBacks->Count())
-		{
-			for (int j = 0; j < pCallBacks->Count(); j++)
-			{
-				if ((*pCallBacks)[j].pCallback == (void *)callback && (*pCallBacks)[j].pOwner == (void *)pContext)
-				{
-					bFoundCallBack = true;
-					break;
-				}
-			}
-		}
-
-		if (!bFoundCallBack)
-   			continue;
-
-		if (g_ChangeHooksGamerules[i].Element == element &&
-			g_ChangeHooksGamerules[i].Offset == info.actual_offset + pProp->GetOffset() &&
-			g_ChangeHooksGamerules[i].pVar == pProp &&
-			g_ChangeHooksGamerules[i].SendPropType == info.prop->GetType())
-		{
-			CallBackInfo sInfo;
-			sInfo.pCallback = callback;
-			sInfo.pOwner = (void *)pContext;
-			sInfo.iCallbackType = CallBackType::Callback_PluginFunction;
-			g_SendProxyManager.UnhookChangeGamerules(i, &sInfo);
-			bFound = true;
-			break;
-		}
+		CallBackInfo sInfo;
+		sInfo.pCallback = (void *)callback;
+		sInfo.pOwner = (void *)pContext;
+		sInfo.iCallbackType = CallBackType::Callback_PluginFunction;
+		g_SendProxyManager.UnhookChangeGamerules(i, &sInfo);
+		return (cell_t)1;
 	}
 
-	return bFound ? (cell_t)1 : (cell_t)0;
+	return (cell_t)0;
 }
 
 static cell_t Native_IsChangeHooked(IPluginContext * pContext, const cell_t * params)
@@ -1527,46 +741,19 @@ static cell_t Native_IsChangeHooked(IPluginContext * pContext, const cell_t * pa
 	int entity = params[1];
 	char * propName;
 	pContext->LocalToString(params[2], &propName);
+	CHECK_VALID_ENTITY_SENDPROP(entity, propName)
 
-	edict_t * pEnt = gamehelpers->EdictOfIndex(entity);
-	if (!pEnt)
- 		return pContext->ThrowNativeError("Invalid Edict Index %d, edict_t is null.", entity);
-
-	pContext->LocalToString(params[2], &propName);
-	ServerClass * sc = pEnt->GetNetworkable()->GetServerClass();
-
-	if (!sc)
-		return pContext->ThrowNativeError("Cannot find ServerClass for entity %d", entity);
-
-	sm_sendprop_info_t info;
-	gamehelpers->FindSendPropInfo(sc->GetName(), propName, &info);
-	SendProp * pProp = info.prop;
-
-	if (!pProp)
-		return pContext->ThrowNativeError("Could not find prop %s", propName);
-
-	for (int i = 0; i < g_ChangeHooks.Count(); i++)
+	PropChangeHook hook;
+	hook.objectID = entity;
+	hook.SendPropType = info.prop->GetType();
+	hook.pVar = info.prop;
+	hook.Offset = info.actual_offset;
+	if (g_ChangeHooks.HasElement(hook))
 	{
-		if (g_ChangeHooks[i].objectID == entity && 
-			strcmp(propName, g_ChangeHooks[i].pVar->GetName()) == 0 && 
-			g_ChangeHooks[i].Offset == info.actual_offset && 
-		    g_ChangeHooks[i].SendPropType == info.prop->GetType() && 
-			g_ChangeHooks[i].pVar == pProp)
+		for (int i = 0; i < g_ChangeHooks.Count(); i++)
 		{
-			auto pCallbacks = g_ChangeHooks[i].vCallbacksInfo;
-			if (pCallbacks->Count())
-			{
-				for (int j = 0; j < pCallbacks->Count(); j++)
-				{
-					if ((*pCallbacks)[j].iCallbackType == CallBackType::Callback_PluginFunction && 
-						(*pCallbacks)[j].pOwner == (void *)pContext)
-					{
-						return (cell_t)1;
-					}
-				}
-			}
-
-			break;
+			if (g_ChangeHooks[i].HasCallBack(pContext))
+				return (cell_t)1;
 		}
 	}
 	
@@ -1576,35 +763,18 @@ static cell_t Native_IsChangeHooked(IPluginContext * pContext, const cell_t * pa
 static cell_t Native_IsGameRulesChangeHooked(IPluginContext * pContext, const cell_t * params)
 {
 	char * propName;
-	pContext->LocalToString(params[1], &propName);
+	CHECK_VALID_GAMERULES_SENDPROP(propName)
 
-	sm_sendprop_info_t info;
-	gamehelpers->FindSendPropInfo(g_szGameRulesProxy, propName, &info);
-	SendProp * pProp = info.prop;
-
-	if (!pProp)
-		return pContext->ThrowNativeError("Could not find prop %s", propName);
-
-	for (int i = 0; i < g_ChangeHooksGamerules.Count(); i++)
+	PropChangeHookGamerules hook;
+	hook.pVar = pProp;
+	hook.Offset = info.actual_offset;
+	hook.SendPropType = info.prop->GetType();
+	if (g_ChangeHooksGamerules.HasElement(hook))
 	{
-		if (strcmp(propName, g_ChangeHooksGamerules[i].pVar->GetName()) == 0 && 
-			g_ChangeHooksGamerules[i].Offset == info.actual_offset &&
-			g_ChangeHooksGamerules[i].SendPropType == info.prop->GetType() &&
-			g_ChangeHooksGamerules[i].pVar == pProp)	
+		for (int i = 0; i < g_ChangeHooksGamerules.Count(); i++)
 		{
-			auto pCallbacks = g_ChangeHooksGamerules[i].vCallbacksInfo;
-			if (pCallbacks->Count())
-			{
-				for (int j = 0; j < pCallbacks->Count(); j++)
-				{
-					if ((*pCallbacks)[j].iCallbackType == CallBackType::Callback_PluginFunction && 
-						(*pCallbacks)[j].pOwner == (void *)pContext)
-					{
-						return (cell_t)1;
-					}
-				}
-			}
-			break;
+			if (g_ChangeHooksGamerules[i].HasCallBack(pContext))
+				return (cell_t)1;
 		}
 	}
 
@@ -1613,84 +783,30 @@ static cell_t Native_IsGameRulesChangeHooked(IPluginContext * pContext, const ce
 
 static cell_t Native_IsArrayChangeHooked(IPluginContext * pContext, const cell_t * params)
 {
-
 	if (params[1] < 0 || params[1] >= g_iEdictCount)
 		return pContext->ThrowNativeError("Invalid Edict Index %d", params[1]);
 	
 	int entity = params[1];
 	char * name;
-
-	edict_t * pEnt = gamehelpers->EdictOfIndex(entity);
-	if (!pEnt)
- 		return pContext->ThrowNativeError("Invalid Edict Index %d, edict_t is null.", entity);
-
 	pContext->LocalToString(params[2], &name);
-	ServerClass * sc = pEnt->GetNetworkable()->GetServerClass();
-
-	if (!sc)
-		return pContext->ThrowNativeError("Cannot find ServerClass for entity %d", entity);
-	
-	sm_sendprop_info_t info;
-	gamehelpers->FindSendPropInfo(sc->GetName(), name, &info);
-	if (!info.prop)
-		return pContext->ThrowNativeError("Could not find prop %s", name);
+	CHECK_VALID_ENTITY_SENDPROP(entity, name)
 
 	int element = params[3];
 	SendProp *pProp = NULL;
-	switch (info.prop->GetType())
+	CHECK_ARRAYPROP_NO_BASE_TYPE(element, name)
+
+	PropChangeHook hook;
+	hook.objectID = entity;
+	hook.Element = element;
+	hook.SendPropType = info.prop->GetType();
+	hook.pVar = pProp;
+	hook.Offset = info.actual_offset + pProp->GetOffset();
+	if (g_ChangeHooks.HasElement(hook))
 	{
-	case DPT_Array:
+		for (int i = 0; i < g_ChangeHooks.Count(); i++)
 		{
-			pProp = info.prop->GetArrayProp();
-			if (!pProp)
-				return pContext->ThrowNativeError("Prop %s does not contain any elements", name);
-			
-			if (element > info.prop->GetNumElements())
-				return pContext->ThrowNativeError("Could not find element %d in %s", element, info.prop->GetName());
-
-			break;
-		}
-	
-	case DPT_DataTable:
-		{
-			SendTable * st = info.prop->GetDataTable();
-
-			if (!st)
-				return pContext->ThrowNativeError("Prop %s does not contain any elements", name);
-
-			pProp = st->GetProp(element);
-			if (!pProp)
-				return pContext->ThrowNativeError("Could not find element %d in %s", element, info.prop->GetName());
-
-			break;
-		}
-	
-	default:
-		return pContext->ThrowNativeError("Prop %s does not contain any elements", name);
-	}
-
-	for (int i = 0; i < g_ChangeHooks.Count(); i++)
-	{
-		if (g_ChangeHooks[i].Element == element && 
-			g_ChangeHooks[i].objectID == entity && 
-			g_ChangeHooks[i].pVar == pProp &&
-			g_ChangeHooks[i].SendPropType == info.prop->GetType() &&
-			g_ChangeHooks[i].Offset == info.actual_offset + pProp->GetOffset() &&
-			strcmp(pProp->GetName(), g_ChangeHooks[i].pVar->GetName()) == 0)
-		{
-			auto pCallbacks = g_ChangeHooks[i].vCallbacksInfo;
-			if (pCallbacks->Count())
-			{
-				for (int j = 0; j < pCallbacks->Count(); j++)
-				{
-					if ((*pCallbacks)[j].iCallbackType == CallBackType::Callback_PluginFunction && 
-						(*pCallbacks)[j].pOwner == (void *)pContext)
-					{
-						return (cell_t)1;
-					}
-				}
-			}
-			break;
+			if (g_ChangeHooks[i].HasCallBack(pContext))
+				return (cell_t)1;
 		}
 	}
 
@@ -1700,67 +816,23 @@ static cell_t Native_IsArrayChangeHooked(IPluginContext * pContext, const cell_t
 static cell_t Native_IsGameRulesArrayChangeHooked(IPluginContext * pContext, const cell_t * params)
 {
 	char * name;
-	pContext->LocalToString(params[1], &name);
-	sm_sendprop_info_t info;
-	gamehelpers->FindSendPropInfo(g_szGameRulesProxy, name, &info);
-
-	if (!info.prop)
-		return pContext->ThrowNativeError("Could not find prop %s", name);
+	CHECK_VALID_GAMERULES_SENDPROP(name)
 	
 	int element = params[2];
-	SendProp *pProp = NULL;
-	switch (info.prop->GetType())
+	pProp = NULL;
+	CHECK_ARRAYPROP_NO_BASE_TYPE(element, name)
+
+	PropChangeHookGamerules hook;
+	hook.pVar = pProp;
+	hook.Element = element;
+	hook.SendPropType = info.prop->GetType();
+	hook.Offset = info.actual_offset + pProp->GetOffset();
+	if (g_ChangeHooksGamerules.HasElement(hook))
 	{
-	case DPT_Array:
+		for (int i = 0; i < g_ChangeHooksGamerules.Count(); i++)
 		{
-			pProp = info.prop->GetArrayProp();
-			if (!pProp)
-				return pContext->ThrowNativeError("Prop %s does not contain any elements", name);
-			
-			if (element > info.prop->GetNumElements())
-				return pContext->ThrowNativeError("Could not find element %d in %s", element, info.prop->GetName());
-
-			break;
-		}
-	
-	case DPT_DataTable:
-		{
-			SendTable * st = info.prop->GetDataTable();
-
-			if (!st)
-				return pContext->ThrowNativeError("Prop %s does not contain any elements", name);
-
-			pProp = st->GetProp(element);
-			if (!pProp)
-				return pContext->ThrowNativeError("Could not find element %d in %s", element, info.prop->GetName());
-
-			break;
-		}
-	
-	default:
-		return pContext->ThrowNativeError("Prop %s does not contain any elements", name);
-	}
-
-	for (int i = 0; i < g_ChangeHooksGamerules.Count(); i++)
-	{
-		if (g_ChangeHooksGamerules[i].Element == element && 
-			g_ChangeHooksGamerules[i].pVar == pProp &&
-   			g_ChangeHooksGamerules[i].SendPropType == info.prop->GetType() &&
-			g_ChangeHooksGamerules[i].Offset == info.actual_offset + pProp->GetOffset() &&
-			strcmp(pProp->GetName(), g_ChangeHooksGamerules[i].pVar->GetName()) == 0)
-		{
-			auto pCallbacks = g_ChangeHooksGamerules[i].vCallbacksInfo;
-			if (pCallbacks->Count())
-			{
-				for (int j = 0; j < pCallbacks->Count(); j++)
-				{
-					if ((*pCallbacks)[j].iCallbackType == CallBackType::Callback_PluginFunction && (*pCallbacks)[j].pOwner == (void *)pContext)
-					{
-						return (cell_t)1;
-					}
-				}
-			}
-			break;
+			if (g_ChangeHooksGamerules[i].HasCallBack(pContext))
+				return (cell_t)1;
 		}
 	}
 

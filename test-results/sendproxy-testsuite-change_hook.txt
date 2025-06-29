@@ -1,0 +1,22 @@
+Started hook. 1, 1, 1, 1, 1, 1, 1, 1
+Setprop: 1
+OnSendPropChanged__m_usingMountedGun: 1, m_usingMountedGun, 0, 1, 0
+OnSendPropChanged__m_checkpointBoomerBilesUsed: 1, m_checkpointBoomerBilesUsed, 0, 1, 0
+OnSendPropChanged__m_iAmmo: 1, 000, 0, 1, 0
+OnSendPropChanged__m_iAmmo: 1, 001, 0, 1, 1
+OnSendPropChanged__m_szScriptedHUDStringSet_2: m_szScriptedHUDStringSet, , aaa, 0
+OnSendPropChanged__m_szScriptedHUDStringSet_2: m_szScriptedHUDStringSet, , aaa, 1
+OnSendPropChanged__m_bIsDedicatedServer: m_bIsDedicatedServer, 1, 0, 0
+OnSendPropChanged__m_flAccumulatedTime: m_flAccumulatedTime, 90.00, 1.00, 0
+Hooked? 1, 1, 1, 1, 1, 1, 1, 1
+Setprop: 0
+OnSendPropChanged__m_usingMountedGun: 1, m_usingMountedGun, 1, 0, 0
+OnSendPropChanged__m_checkpointBoomerBilesUsed: 1, m_checkpointBoomerBilesUsed, 1, 0, 0
+OnSendPropChanged__m_iAmmo: 1, 000, 1, 0, 0
+OnSendPropChanged__m_iAmmo: 1, 001, 1, 0, 1
+OnSendPropChanged__m_szScriptedHUDStringSet_2: m_szScriptedHUDStringSet, aaa, , 0
+OnSendPropChanged__m_szScriptedHUDStringSet_2: m_szScriptedHUDStringSet, aaa, , 1
+OnSendPropChanged__m_bIsDedicatedServer: m_bIsDedicatedServer, 0, 1, 0
+OnSendPropChanged__m_flAccumulatedTime: m_flAccumulatedTime, 1.00, 0.00, 0
+Ended hook. 1, 1, 1, 1, 1, 1, 1, 1
+Hooked? 0, 0, 0, 0, 0, 0, 0, 0
