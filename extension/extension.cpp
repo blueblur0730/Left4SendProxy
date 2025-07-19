@@ -987,14 +987,18 @@ void SendProxyManager::OnPluginUnloaded(IPlugin * plugin)
 			{
 				if ((*pCallbacks)[j].iCallbackType == CallBackType::Callback_PluginFunction && (IPluginContext *)(*pCallbacks)[j].pOwner == pCtx)
 				{
-					pCallbacks->Remove(j--);
+					pCallbacks->Remove(j);
+					j--;
 				}
 			}
 		}
-
-		//else do not needed here
+		
 		if (!pCallbacks->Count())
+		{
+			//else do not needed here
 			g_ChangeHooks.Remove(i);
+			i--;
+		}
 	}
 
 	for (int i = 0; i < g_ChangeHooksGamerules.Count(); i++)
@@ -1006,14 +1010,18 @@ void SendProxyManager::OnPluginUnloaded(IPlugin * plugin)
 			{
 				if ((*pCallbacks)[j].iCallbackType == CallBackType::Callback_PluginFunction && (IPluginContext *)(*pCallbacks)[j].pOwner == pCtx)
 				{
-					pCallbacks->Remove(j--);
+					pCallbacks->Remove(j);
+					j--;
 				}
 			}
 		}
 
-		//else do not needed here
 		if (!pCallbacks->Count())
+		{
+			//else do not needed here
 			g_ChangeHooksGamerules.Remove(i);
+			i--;
+		}	
 	}
 }
 
