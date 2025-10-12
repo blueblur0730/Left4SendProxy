@@ -206,6 +206,7 @@ class ExtensionConfig(object):
       '-Wno-unused',
       '-Wno-switch',
       '-Wno-array-bounds',
+      '-Wno-deprecated-volatile',
       '-fvisibility=hidden',
       # /home/runner/work/Left4SendProxy/Left4SendProxy/alliedmodders/hl2sdk-l4d/public/mathlib/vector.h:207:49:
       # note: expanded from macro 'USE_M64S' 207 | #define USE_M64S ( ( !defined( _X360 ) ) && ( ! defined( _LINUX) ) )
